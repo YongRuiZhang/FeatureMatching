@@ -97,7 +97,7 @@ def matching_pair(path, img1_path, img2_path, scene,
     return save_path
 
 
-def matching_images(path, scene, fix=True, image_glob=None, skip=1, max_length=1000000, resize=None, max_keypoints=-1,
+def matching_images(path, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, max_keypoints=-1,
                     keypoint_threshold=0.005,
                     nms_radius=4,
                     sinkhorn_iterations=20,
@@ -130,7 +130,15 @@ def matching_images(path, scene, fix=True, image_glob=None, skip=1, max_length=1
     matching = Matching(config).eval().to(device)
     keys = ['keypoints', 'scores', 'descriptors']
 
-    vs = VideoStreamer(path, resize, skip, image_glob, max_length)
+    if type == '多张图片':
+        vs = VideoStreamer(path, resize=resize,
+                       skip=skip, image_glob=image_glob, max_length=max_length)
+    elif type == '视频':
+        file_names = os.listdir(path)
+        file_path = [os.path.join(path, file_name) for file_name in file_names if os.path.isfile(os.path.join(path, file_name))][0]
+        vs = VideoStreamer(file_path, resize=resize,
+                           skip=skip, image_glob=image_glob, max_length=max_length)
+
     frame, _ = vs.next_frame()
 
     last_frame_tensor = frame2tensor(frame, device)

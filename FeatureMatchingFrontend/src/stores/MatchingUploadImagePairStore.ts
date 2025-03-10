@@ -6,6 +6,8 @@ export const useMatchingUploadImagePairStore = defineStore('matchingUploadImageP
     dir_name: '',
     leftpath: '',
     rightpath: '',
+    leftpath_url: '',
+    rightpath_url: '',
   }),
   actions: {
     setPath(path: string) {
@@ -20,6 +22,12 @@ export const useMatchingUploadImagePairStore = defineStore('matchingUploadImageP
     setRightPath(rightpath: string) {
       this.rightpath = rightpath
     },
+    setLeftPathUrl(leftpath_url: string) {
+      this.leftpath_url = leftpath_url
+    },
+    setRightPathUrl(rightpath_url: string) {
+      this.rightpath_url = rightpath_url
+    },
 
     removePath() {
       this.path = ''
@@ -33,11 +41,19 @@ export const useMatchingUploadImagePairStore = defineStore('matchingUploadImageP
     removeRightPath() {
       this.rightpath = ''
     },
+    removeLeftPathUrl() {
+      this.leftpath_url = ''
+    },
+    removeRightPathUrl() {
+      this.rightpath_url = ''
+    },
     init() {
       this.removePath()
       this.removeDirName()
       this.removeLeftPath()
       this.removeRightPath()
+      this.removeLeftPathUrl()
+      this.removeRightPathUrl()
     },
   },
   persist: true,

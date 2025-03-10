@@ -52,8 +52,6 @@ def matching_BF(bf, des1, des2):
     return bf.match(des1, des2)
 
 
-
-
 def draw_matching(frame1, frame2, kpts1, kpts2, matches, kptsMethod, small_text):
     out = cv2.drawMatches(frame1, kpts1, frame2, kpts2, matches, None)
 
@@ -85,6 +83,7 @@ def draw_matching(frame1, frame2, kpts1, kpts2, matches, kptsMethod, small_text)
 
     return out
 
+
 def matching_BF_pair(path, img1_path, img2_path, kptsMethod):
     bf = cv2.BFMatcher(cv2.NORM_L2, True)
 
@@ -114,7 +113,7 @@ def matching_BF_pair(path, img1_path, img2_path, kptsMethod):
     return save_path
 
 
-def matching_BF_images(path, kptsMethod, fix=True, image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
+def matching_BF_images(path, kptsMethod, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -122,8 +121,15 @@ def matching_BF_images(path, kptsMethod, fix=True, image_glob=None, skip=1, max_
 
     bf = cv2.BFMatcher(cv2.NORM_L2, True)
 
-    vs = VideoStreamer(path, resize=resize,
+    if type == '多张图片':
+        vs = VideoStreamer(path, resize=resize,
                        skip=skip, image_glob=image_glob, max_length=max_length)
+    elif type == '视频':
+        file_names = os.listdir(path)
+        file_path = \
+        [os.path.join(path, file_name) for file_name in file_names if os.path.isfile(os.path.join(path, file_name))][0]
+        vs = VideoStreamer(file_path, resize=resize,
+                           skip=skip, image_glob=image_glob, max_length=max_length)
     frame, _ = vs.next_frame()
     last_frame = frame
     last_image_id = 0

@@ -228,11 +228,11 @@ async function rightRemoveFile(uploadFile: any) {
 
 <style scoped>
 .upload-demo {
-    height: 18vw;
+    height: 32vh;
 }
 
 #uploadBox {
-    width: 90%;
+    width: 100%;
     /* 固定长宽比为 16:9 */
     aspect-ratio: 16 / 5;
 

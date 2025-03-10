@@ -83,7 +83,7 @@
                             <template #title>管理用户信息</template>
                         </el-menu-item>
 
-                        <el-menu-item index="/user/modify">
+                        <el-menu-item index="/user/modify" v-if="username != '登陆'">
                             <el-icon>
                                 <SvgIcon icon-name="icon-essential-information" />
                             </el-icon>

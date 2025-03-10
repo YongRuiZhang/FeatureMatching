@@ -25,11 +25,28 @@
                     <el-tab-pane label="多张图片">
                         <UploadImages :setStepsActive1="setStepsActive1" :setStepsActive0="setStepsActive0" />
                     </el-tab-pane>
-                    <el-tab-pane label="视频">视频</el-tab-pane>
+                    <el-tab-pane label="视频">
+                        <UploadVideo :setStepsActive1="setStepsActive1" :setStepsActive0="setStepsActive0" />
+                    </el-tab-pane>
                     <el-tab-pane label="实时">
                         <el-row>
                             <el-col :span="9" :offset="4">
-                                <img src="http://127.0.0.1:5000/matching/video_feed" style="max-height: 33vh;">
+                                <div style="height: 33vh; display: flex; justify-content: center; align-items: center; 
+                                    border-radius: 5px;
+                                    border-color: var(--el-border-color);
+                                    border-width: 1px;
+                                    border-style: dashed;
+                                ">
+                                    <el-button v-if="!showPcCamera" @click="showPcCamera = true" type="primary">
+                                        打开电脑摄像头
+                                    </el-button>
+
+                                    <el-tooltip placement="top" content="点击画面关闭摄像头" v-if="showPcCamera">
+                                        <img src="http://127.0.0.1:5000/matching/video_feed" style="max-height: 33vh;"
+                                            @click="closePcCamera">
+                                    </el-tooltip>
+                                </div>
+
                             </el-col>
 
                             <el-col :span="1" style="display: flex; align-items: center; justify-content: center;">
@@ -97,6 +114,17 @@
                                                     <el-segmented v-model="form.fix" :options="['首张作为基准', '前张作为基准']" />
                                                 </div>
                                             </el-form-item>
+                                            <el-form :inline="true" :model="form" class="demo-form-inline" size="small">
+                                                <el-text style="margin-right: 5px;">skip: </el-text>
+                                                <el-input v-model="form.skip" placeholder="1"
+                                                    style="width: 40px; margin-right: 5px;" />
+                                                <el-tooltip class="box-item" effect="dark"
+                                                    content="匹配时跳过图片数，视频建议30，即（2 fps）" placement="bottom">
+                                                    <el-icon>
+                                                        <SvgIcon icon-name="icon-tishi" />
+                                                    </el-icon>
+                                                </el-tooltip>
+                                            </el-form>
                                         </el-form>
                                     </div>
                                     <div class="submit">
@@ -156,7 +184,10 @@
                             </el-form-item>
                             <el-form-item label="匹配算法:">
                                 <el-radio-group v-model="form.matchmethod">
-                                    <el-radio-button label="LoFTR" value="LoFTR" />
+                                    <el-radio-button label="LoFTR" value="LoFTR" v-if="form.class === '半稀疏'" />
+                                    <el-radio-button label="Efficient LoFTR" value="Efficient LoFTR"
+                                        v-if="form.class === '半稀疏'" />
+                                    <el-radio-button label="DKM" value="DKM" v-if="form.class === '稠密'" />
                                     <el-radio-button label="SuperGlue" value="SuperGlue" v-if="form.class === '稀疏'" />
                                     <el-radio-button label="BF" value="BF" v-if="form.class === '稀疏'" />
                                     <el-radio-button label="FLANN" value="FLANN" v-if="form.class === '稀疏'" />
@@ -188,11 +219,21 @@
                             </el-row>
                             <br />
 
-                            <el-form-item label="基准配置:" v-if="tabName === '多张图片'">
+                            <el-form-item label="基准配置:" v-if="tabName === '多张图片' || tabName === '视频'">
                                 <div class="custom-style">
                                     <el-segmented v-model="form.fix" :options="['首张作为基准', '前张作为基准']" />
                                 </div>
                             </el-form-item>
+                            <el-form :inline="true" :model="form" class="demo-form-inline" size="small">
+                                <el-text style="margin-right: 5px;">skip: </el-text>
+                                <el-input v-model="form.skip" placeholder="1" style="width: 40px; margin-right: 5px;" />
+                                <el-tooltip class="box-item" effect="dark" content="匹配时跳过图片数，视频建议30，即（2 fps）"
+                                    placement="bottom">
+                                    <el-icon>
+                                        <SvgIcon icon-name="icon-tishi" />
+                                    </el-icon>
+                                </el-tooltip>
+                            </el-form>
                         </el-form>
                     </div>
                     <div class="submit">
@@ -252,6 +293,8 @@ import axios from "axios";
 import { ElMessage, ElNotification } from "element-plus";
 import type { responseType } from "@/types";
 import UploadImagePair from "@/components/matching/UploadImagePair.vue";
+import UploadVideo from "@/components/matching/UploadVideo.vue";
+import { useMatchingUploadVideoStore } from "@/stores/MatchingUploadVideo";
 
 // 获取选择的 TabName
 let tabName = ref('两张图片')
@@ -259,6 +302,14 @@ const tabClick = (tab: any) => {
     tabName.value = tab.props.label
     result_path_url.value = ''
     result_path.value = ''
+}
+// 实时
+let showPcCamera = ref(false)
+const closePcCamera = async () => {
+    await axios.delete('http://127.0.0.1:5000/matching/video_feed').then(res => {
+        if (res.data.code == 200)
+            showPcCamera.value = false
+    })
 }
 // 步骤条
 let stepsActive = ref(0)
@@ -275,18 +326,30 @@ let form = reactive({
     matchmethod: 'SuperGlue',
     scene: '室内',
     fix: '首张作为基准',
+    skip: 1,
 })
 const showScene = () =>
     (form.class === '稀疏' && (form.matchmethod === 'LoFTR' || form.matchmethod === 'SuperGlue')) ||
-    (form.class === '半稀疏' && form.matchmethod === 'LoFTR');
+    (form.class === '半稀疏' && form.matchmethod === 'LoFTR' || form.matchmethod === 'Efficient LoFTR');
 
 watchEffect(() => {
-    if (form.class === '半稀疏' && (form.matchmethod !== 'LoFTR')) {
+    if (form.class === '稀疏' && form.matchmethod !== 'SuperGlue' && form.matchmethod !== 'BF' && form.matchmethod !== 'FLANN') {
+        form.matchmethod = 'SuperGlue'
+    }
+    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'Efficient LoFTR') {
         form.matchmethod = 'LoFTR'
     }
+    if (form.class === '稠密' && form.matchmethod !== 'DKM') {
+        form.matchmethod = 'DKM'
+    }
+
 
     if (form.matchmethod === 'SuperGlue' && form.kptmethod !== 'SuperPoint') {
         form.kptmethod = 'SuperPoint'
+    }
+
+    if (tabName.value === '实时' || tabName.value === '视频') {
+        form.skip = 30
     }
 })
 
@@ -340,22 +403,36 @@ const matchingPairs = async () => {
     resLoading.value = false
 }
 
-// 匹配多张图片
-const matchingIamges = async () => {
-    // 获取 多张图片 的返回值
-    const matchingUploadImagesStore = useMatchingUploadImagesStore()
-    let { path, dir_name, filesInfo } = matchingUploadImagesStore
-    if (path === undefined || path === '') {
-        ElMessage.error('请先上传图片')
-        return
-    }
-    if (filesInfo.length <= 2) {
-        ElMessage.error('请上传两张以上图片')
-        return
+// 匹配多张图片 及 视频
+const matchingIamgesAndVideo = async () => {
+    let path, dir_name;
+    if (tabName.value === '多张图片') {
+        const matchingUploadImagesStore = useMatchingUploadImagesStore()
+        let { path: imagePath, dir_name: imageDirName, filesInfo } = matchingUploadImagesStore
+        if (imagePath === undefined || imagePath === '') {
+            ElMessage.error('请先上传图片')
+            return
+        }
+        if (filesInfo.length <= 2) {
+            ElMessage.error('请上传两张以上图片')
+            return
+        }
+        path = imagePath
+        dir_name = imageDirName
+    } else if (tabName.value === '视频') {
+        const matchingUploadVideoStore = useMatchingUploadVideoStore()
+        let { path: videoPath, dir_name: videoDirName } = matchingUploadVideoStore
+        if (videoPath === undefined || videoPath === '') {
+            ElMessage.error('请先上传视频')
+            return
+        }
+        path = videoPath
+        dir_name = videoDirName
     }
     const postForm = {
         'path': path,
         'dir_name': dir_name,
+        'type': tabName.value,
         'form': form,
     }
     ElMessage.success('正在匹配，请稍等')
@@ -397,10 +474,8 @@ const matching = async () => {
     resLoading.value = true
     if (tabName.value === '两张图片') {
         matchingPairs()
-    } else if (tabName.value === '多张图片') {
-        matchingIamges()
-    } else if (tabName.value === '视频') {
-        matchingVideo()
+    } else if (tabName.value === '多张图片' || tabName.value === '视频') {
+        matchingIamgesAndVideo()
     } else if (tabName.value === '实时') {
         matchingRealTime()
     }

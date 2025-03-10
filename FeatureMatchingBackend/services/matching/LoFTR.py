@@ -74,7 +74,7 @@ def withoutKpts_pair(path, img1_path, img2_path, scene):
     return save_path
 
 
-def withoutKpts_images(path, scene, fix=True, image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
+def withoutKpts_images(path, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -93,8 +93,15 @@ def withoutKpts_images(path, scene, fix=True, image_glob=None, skip=1, max_lengt
         matcher.load_state_dict(torch.load("weights/LoFTR/outdoor_ds.ckpt")['state_dict'])
         matcher = matcher.eval()
 
-    vs = VideoStreamer(path, resize=resize,
-                       skip=skip, image_glob=image_glob, max_length=max_length)
+    if type == '多张图片':
+        vs = VideoStreamer(path, resize=resize,
+                           skip=skip, image_glob=image_glob, max_length=max_length)
+    elif type == '视频':
+        file_names = os.listdir(path)
+        file_path = \
+        [os.path.join(path, file_name) for file_name in file_names if os.path.isfile(os.path.join(path, file_name))][0]
+        vs = VideoStreamer(file_path, resize=resize,
+                           skip=skip, image_glob=image_glob, max_length=max_length)
     frame, _ = vs.next_frame()
     last_frame_tensor = frame2tensor(frame, device)
     last_frame = frame

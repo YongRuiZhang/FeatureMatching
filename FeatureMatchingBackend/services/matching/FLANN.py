@@ -122,7 +122,7 @@ def matching_FLANN_pair(path, img1_path, img2_path, kptsMethod):
     return save_path
 
 
-def matching_FLANN_images(path, kptsMethod, fix=True, image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
+def matching_FLANN_images(path, kptsMethod, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -132,7 +132,16 @@ def matching_FLANN_images(path, kptsMethod, fix=True, image_glob=None, skip=1, m
     search_params = dict(checks=50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
 
-    vs = VideoStreamer(path, resize=resize, skip=skip, image_glob=image_glob, max_length=max_length)
+    if type == '多张图片':
+        vs = VideoStreamer(path, resize=resize,
+                           skip=skip, image_glob=image_glob, max_length=max_length)
+    elif type == '视频':
+        file_names = os.listdir(path)
+        file_path = \
+        [os.path.join(path, file_name) for file_name in file_names if os.path.isfile(os.path.join(path, file_name))][0]
+        vs = VideoStreamer(file_path, resize=resize,
+                           skip=skip, image_glob=image_glob, max_length=max_length)
+
     frame, _ = vs.next_frame()
     last_frame = frame
     last_image_id = 0
