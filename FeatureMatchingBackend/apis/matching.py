@@ -31,7 +31,7 @@ def upload_image():
         else:
             uid = request.form.get('uid')
             dir_path = request.form.get('dir_path')
-            print(uid, dir_path)
+            
             if uid == '' or uid is None:  # 无目录，创建目录
                 uid = str(uuid.uuid4())
 
@@ -43,7 +43,6 @@ def upload_image():
 
             file_path = os.path.join(dir_path, filename)
             file_path_url = current_app.root_path + "/src/assets/matching/" + uid + '/' + filename
-
 
             # 文件保存
             file.save(file_path, buffer_size=1000000000)
@@ -60,7 +59,26 @@ def upload_image():
         return res(code='500', msg='图片上传失败', data=str(e))
 
 
-@matching_api.post('image')
+@matching_api.delete('/upload_image')
+def delete_image():
+    try:
+        path = request.json.get('path')
+        name = request.json.get('name')
+        filename = os.path.join(path, name)
+        if os.path.exists(filename):
+            os.remove(filename)
+
+        remaining_files = os.listdir(path)
+
+        if len(remaining_files) == 0:
+            os.rmdir(path)
+
+        return res(msg='删除成功')
+    except Exception as e:
+        return res(code='500', msg='图片删除失败，建议刷新网页后重试', data=str(e))
+
+
+@matching_api.post('/image')
 def matching_image():
     try:
         path = request.json.get('path')
@@ -94,6 +112,7 @@ def matching_image():
         return res(200, msg='特征匹配成功', data={'save_path': save_path, 'save_path_url': save_path_url})
     except Exception as e:
         return res(code='500', msg='特征匹配失败', data=str(e))
+
 
 @matching_api.post('/upload_images')
 def upload_images():
@@ -141,7 +160,6 @@ def upload_images():
 def delete_images():
     try:
         path = request.json.get('path')
-        dir_name = request.json.get('dir_name')
         name = request.json.get('name')
         filename = os.path.join(path, name)
         if os.path.exists(filename):

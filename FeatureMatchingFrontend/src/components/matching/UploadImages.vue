@@ -36,7 +36,7 @@ import type { UploadUserFile } from 'element-plus'
 import type { responseType } from "@/types";
 import { useMatchingUploadImagesStore } from "@/stores/MatchingUploadImagesStore";
 
-const changeStepsActive = defineProps(['changeStepsActive'])
+const props = defineProps(['setStepsActive1', 'setStepsActive0'])
 
 const store = useMatchingUploadImagesStore()
 
@@ -92,7 +92,7 @@ const submitUpload = async () => {
                 type: 'success'
             })
 
-            changeStepsActive.changeStepsActive()
+            props.setStepsActive1()
         } else if (response.code === 300 || response.code === 500) {
             ElNotification({
                 title: response.msg,
@@ -109,7 +109,6 @@ const removeFile = async (uploadFile: any) => {
             await axios.delete('http://127.0.0.1:5000/matching/upload_images', {
                 data: {
                     'path': path.value,
-                    'dir_name': dir_name.value,
                     'name': uploadFile.name
                 }
             }).then((res) => {
@@ -122,6 +121,7 @@ const removeFile = async (uploadFile: any) => {
 
                     if (filesInfo.value.length === 0) {
                         store.init()
+                        props.setStepsActive0()
                     }
 
                     ElMessage({

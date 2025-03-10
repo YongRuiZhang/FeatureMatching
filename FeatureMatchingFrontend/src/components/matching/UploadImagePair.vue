@@ -1,5 +1,5 @@
 <template>
-    <div class="">
+    <el-scrollbar class="">
         <el-row>
             <el-col :span="10" :offset="1">
                 <el-text>
@@ -58,18 +58,19 @@
             </el-col>
         </el-row>
 
-    </div>
+    </el-scrollbar>
 </template>
 
 <script lang='ts' setup name='UploadImagePair'>
-import type { uploadImageType } from "@/types"
-import { ElNotification } from "element-plus"
+import type { responseType, uploadImageType } from "@/types"
+import { ElMessage, ElNotification } from "element-plus"
 import { reactive, ref } from "vue"
 import { useMatchingUploadImagePairStore } from "@/stores/MatchingUploadImagePairStore";
+import axios from "axios";
 
 const store = useMatchingUploadImagePairStore()
 
-const changeStepsActive = defineProps(['changeStepsActive'])
+const props = defineProps(['setStepsActive1', 'setStepsActive0'])
 
 
 let uid = ref<string>('') // uuid 的文件名
@@ -112,7 +113,7 @@ function leftUploadSuccess(response: any) {
         })
 
         if (right.havePic) {
-            changeStepsActive.changeStepsActive()
+            props.setStepsActive1()
         }
     }
 }
@@ -143,39 +144,85 @@ function rightUploadSuccess(response: any) {
         })
 
         if (left.havePic) {
-            changeStepsActive.changeStepsActive()
+            props.setStepsActive1()
         }
     }
 }
 
-function leftRemoveFile() {
-    Object.assign(left, {
-        havePic: false,
-        imagePath: '',
-        imagePath_url: '',
+const leftRemoveFile = async (uploadFile: any) => {
+    await axios.delete('http://127.0.0.1:5000/matching/upload_image', {
+        data: {
+            'path': dir_path.value,
+            'name': uploadFile.name
+        }
+    }).then(res => {
+        let response: responseType = res.data
+
+        if (response.code === 200) {
+            Object.assign(left, {
+                havePic: false,
+                imagePath: '',
+                imagePath_url: '',
+            })
+
+            store.removeLeftPath()
+
+            if (!right.havePic) {
+                dir_path.value = ''
+                store.init()
+                props.setStepsActive0()
+            }
+
+            ElMessage({
+                message: response.msg,
+                type: 'success'
+            })
+        } else if (response.code === 300 || response.code === 500) {
+            ElNotification({
+                title: response.msg,
+                message: response.data,
+                type: 'error'
+            })
+        }
     })
-
-    store.removeLeftPath()
-
-    if (!right.havePic) {
-        dir_path.value = ''
-        store.init()
-    }
 }
 
-function rightRemoveFile() {
-    Object.assign(right, {
-        havePic: false,
-        imagePath: '',
-        imagePath_url: '',
+async function rightRemoveFile(uploadFile: any) {
+    await axios.delete('http://127.0.0.1:5000/matching/upload_image', {
+        data: {
+            'path': dir_path.value,
+            'name': uploadFile.name
+        }
+    }).then(res => {
+        let response: responseType = res.data
+
+        if (response.code === 200) {
+            Object.assign(right, {
+                havePic: false,
+                imagePath: '',
+                imagePath_url: '',
+            })
+
+            store.removeRightPath()
+
+            if (!left.havePic) {
+                dir_path.value = ''
+                store.init()
+                props.setStepsActive0()
+            }
+
+            ElMessage({
+                message: response.msg,
+                type: 'success'
+            })
+        } else if (response.code === 300 || response.code === 500) {
+            ElNotification({
+                title: response.msg,
+                message: response.data,
+                type: 'error'
+            })
+        }
     })
-
-    store.removeRightPath()
-
-    if (!left.havePic) {
-        dir_path.value = ''
-        store.init()
-    }
 }
 </script>
 

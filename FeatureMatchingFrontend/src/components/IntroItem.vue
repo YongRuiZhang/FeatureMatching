@@ -37,7 +37,6 @@
 
 <script lang='ts' setup name='IntroItem'>
 const prop = defineProps(['paper'])
-console.log(prop);
 
 </script>
 

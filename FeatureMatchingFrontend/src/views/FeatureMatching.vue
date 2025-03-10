@@ -20,10 +20,10 @@
             <el-col :span="24">
                 <el-tabs tab-position="top" type="border-card" @tab-click="tabClick">
                     <el-tab-pane label="两张图片">
-                        <UploadImagePair :changeStepsActive="changeStepsActive" />
+                        <UploadImagePair :setStepsActive1="setStepsActive1" :setStepsActive0="setStepsActive0" />
                     </el-tab-pane>
                     <el-tab-pane label="多张图片">
-                        <UploadImages :changeStepsActive="changeStepsActive" />
+                        <UploadImages :setStepsActive1="setStepsActive1" :setStepsActive0="setStepsActive0" />
                     </el-tab-pane>
                     <el-tab-pane label="视频">视频</el-tab-pane>
                     <el-tab-pane label="实时">实时</el-tab-pane>
@@ -157,8 +157,11 @@ const tabClick = (tab: any) => {
 }
 // 步骤条
 let stepsActive = ref(0)
-const changeStepsActive = () => {
+const setStepsActive1 = () => {
     stepsActive.value = 1
+}
+const setStepsActive0 = () => {
+    stepsActive.value = 0
 }
 // 选择方法的表单
 let form = reactive({
