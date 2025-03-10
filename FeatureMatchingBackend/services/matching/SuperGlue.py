@@ -15,7 +15,87 @@ from matplotlib import cm
 
 from DLModels.SuperGlue.matching import Matching
 from utils.matching_utils import (AverageTimer, VideoStreamer,
-                                  frame2tensor, make_matching_plot_fast)
+                                  frame2tensor, make_matching_plot_fast, process_resize)
+
+
+def matching_pair(path, img1_path, img2_path, scene,
+                   max_keypoints=-1,
+                   keypoint_threshold=0.005,
+                   nms_radius=4,
+                   sinkhorn_iterations=20,
+                   match_threshold=0.2, fps=1):
+
+    device = 'cpu'
+
+    if scene == '室内':
+        scene = 'indoor'
+    elif scene == '室外':
+        scene = 'outdoor'
+
+    config = {
+        'superpoint': {
+            'nms_radius': nms_radius,
+            'keypoint_threshold': keypoint_threshold,
+            'max_keypoints': max_keypoints
+        },
+        'superglue': {
+            'weights': scene,
+            'sinkhorn_iterations': sinkhorn_iterations,
+            'match_threshold': match_threshold,
+        }
+    }
+
+    matching = Matching(config).eval().to(device)
+    keys = ['keypoints', 'scores', 'descriptors']
+
+    timer = AverageTimer(newline=True)
+
+    img1 = cv2.imread(img1_path, 0)
+    img2 = cv2.imread(img2_path, 0)
+    w, h = img1.shape[1], img1.shape[0]
+    w_new, h_new = process_resize(w, h, [640, 480])
+    img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    img1_tensor = frame2tensor(img1, device)
+    img2_tensor = frame2tensor(img2, device)
+    timer.update('process images')
+
+    with torch.no_grad():
+        pred = matching({'image0': img1_tensor, 'image1': img2_tensor})
+        kpts0 = pred['keypoints0'][0].cpu().numpy()
+        kpts1 = pred['keypoints1'][0].cpu().numpy()
+        matches = pred['matches0'][0].cpu().numpy()
+        confidence = pred['matching_scores0'][0].cpu().numpy()
+    timer.update('forward')
+
+    valid = matches > -1
+    mkpts0 = kpts0[valid]
+    mkpts1 = kpts1[matches[valid]]
+    color = cm.jet(confidence[valid])
+    text = [
+        'SuperPoint_SuperGlue',
+        'Keypoints: {}:{}'.format(len(kpts0), len(kpts1)),
+        'Matches: {}'.format(len(mkpts0))
+    ]
+    k_thresh = matching.superpoint.config['keypoint_threshold']
+    m_thresh = matching.superglue.config['match_threshold']
+    img1_name = os.path.basename(img1_path)
+    img2_name = os.path.basename(img2_path)
+    small_text = [
+        'Keypoint Threshold: {:.4f}'.format(k_thresh),
+        'Match Threshold: {:.2f}'.format(m_thresh),
+        'Image Pair: {}:{}'.format(img1_name, img2_name),
+    ]
+    save_dir = os.path.join(path, 'res')
+    os.makedirs(save_dir, exist_ok=True)
+
+    save_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}.png".format(scene))
+    out = make_matching_plot_fast(
+        img1, img2, mkpts0, mkpts1, color, text, kpts0, kpts1,
+        path=save_path, show_keypoints=True, small_text=small_text)
+
+    return save_path
+
 
 def matching_images(path, scene, fix=True, image_glob=None, skip=1, max_length=1000000, resize=None, max_keypoints=-1,
                     keypoint_threshold=0.005,
@@ -54,10 +134,6 @@ def matching_images(path, scene, fix=True, image_glob=None, skip=1, max_length=1
     frame, _ = vs.next_frame()
 
     last_frame_tensor = frame2tensor(frame, device)
-    # last_data = matching.superpoint({'image': frame_tensor})
-    #
-    # last_data = {k + '0': last_data[k] for k in keys}
-    # last_data['image0'] = frame_tensor
     last_frame = frame
     last_image_id = 0
 

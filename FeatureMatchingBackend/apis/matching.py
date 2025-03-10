@@ -31,7 +31,7 @@ def upload_image():
         else:
             uid = request.form.get('uid')
             dir_path = request.form.get('dir_path')
-            
+
             if uid == '' or uid is None:  # 无目录，创建目录
                 uid = str(uuid.uuid4())
 
@@ -95,12 +95,11 @@ def matching_image():
             matchMethod = form['matchmethod']
             if matchMethod == 'SuperGlue':
                 scene = form['scene']
-                # save_path = SuperGlue.matching_images(path, scene)
+                save_path = SuperGlue.matching_pair(path, leftpath, rightpath, scene)
             elif matchMethod == 'LoFTR':
                 scene = form['scene']
             elif matchMethod == 'BF':
-                pass
-                # save_path = BF.matching_BF_images(path, kptMethod)
+                save_path = BF.matching_BF_pair(path, leftpath, rightpath, kptMethod)
             elif matchMethod == 'FLANN':
                 save_path = FLANN.matching_FLANN_pair(path, leftpath, rightpath, kptMethod)
         elif cls == '半稀疏':

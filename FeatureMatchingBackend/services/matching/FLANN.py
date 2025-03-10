@@ -4,7 +4,7 @@ Author     : YongRuiZhang
 Date       : 2025/3/9 16:26
 Project    : FeatureMatchingBackend
 FilePath   : services/matching/FLANN.py
-Description: FLANN 实现特征匹配业务方法
+Description: FLANN 实现特征匹配的业务方法
 """
 
 import os
@@ -91,7 +91,7 @@ def draw_matching(frame1, frame2, kpts1, kpts2, better_matches, kptsMethod, smal
     return out
 
 
-def matching_FLANN_pair(path, img1_path, img2_path, kptsMethod, fps=1):
+def matching_FLANN_pair(path, img1_path, img2_path, kptsMethod):
     index_params = dict(algorithm=1, trees=5)
     search_params = dict(checks=50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
@@ -103,7 +103,7 @@ def matching_FLANN_pair(path, img1_path, img2_path, kptsMethod, fps=1):
     w_new, h_new = process_resize(w, h, [640, 480])
     img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
     img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
-    timer.update('load images')
+    timer.update('process images')
 
     kpts1, kpts2, des1, des2 = detection_FLANN(img1, img2, kptsMethod)
     timer.update('detect')
@@ -146,7 +146,7 @@ def matching_FLANN_images(path, kptsMethod, fix=True, image_glob=None, skip=1, m
         if not ret:
             print('Finished')
             break
-        timer.update('load data')
+        timer.update('process images')
         stem0, stem1 = last_image_id, vs.i - 1
 
         kpts1, kpts2, des1, des2 = detection_FLANN(last_frame, frame, kptsMethod)
@@ -161,6 +161,7 @@ def matching_FLANN_images(path, kptsMethod, fix=True, image_glob=None, skip=1, m
         matching_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
         if not fix:
             last_frame = frame
+
     save_dir = os.path.join(path, 'res')
     os.makedirs(save_dir, exist_ok=True)
     save_path = os.path.join(save_dir, "FLANN_{}.mp4".format(kptsMethod))
