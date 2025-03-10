@@ -14,7 +14,7 @@ from models import db
 dir_path_base = '/Users/yonruizhang/MyUse/school/大四/毕业设计/代码/FeatureMatching/'
 app = Flask(__name__,
             root_path="http://localhost:5173",
-            static_folder=dir_path_base + 'src/assets',
+            static_folder=dir_path_base + 'FeatureMatchingFrontend/src/assets',
             template_folder=dir_path_base + "src"
             )
 
