@@ -7,9 +7,12 @@ FilePath   : apis/matching.py
 Description:
 """
 import os
+import time
 import uuid
 
-from flask import Blueprint, request
+import cv2
+import numpy as np
+from flask import Blueprint, request, Response
 from flask import current_app
 from werkzeug.utils import secure_filename
 
@@ -105,7 +108,7 @@ def matching_image():
         elif cls == '半稀疏':
             matchMethod = form['matchmethod']
             scene = form['scene']
-            # save_path = LoFTR.withoutKpts_images(path, scene)
+            save_path = LoFTR.withoutKpts_pair(path, leftpath, rightpath, scene)
 
         save_path_url = save_path_url + os.path.basename(save_path)
         return res(200, msg='特征匹配成功', data={'save_path': save_path, 'save_path_url': save_path_url})
@@ -172,6 +175,34 @@ def delete_images():
         return res(msg='删除成功')
     except Exception as e:
         return res(code='500', msg='图片删除失败，建议刷新网页后重试', data=str(e))
+
+
+
+
+def getRealTimeImage():
+    cap = cv2.VideoCapture(0)
+    fps = 10
+    while True:
+        return_value, frame = cap.read()
+        if not return_value:
+            break
+
+        # 将原始帧和处理后的帧编码为 JPEG
+        _, original_image = cv2.imencode('.jpg', frame)
+
+        # 生成原始帧的 HTTP 响应格式
+        original_frame = (
+                b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + original_image.tobytes() + b'\r\n'
+        )
+
+        yield original_frame
+        time.sleep(1 / fps)
+
+
+@matching_api.route('/video_feed')
+def video_feed():
+    return Response(getRealTimeImage(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @matching_api.post('/images')

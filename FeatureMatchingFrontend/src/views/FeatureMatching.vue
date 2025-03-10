@@ -26,12 +26,94 @@
                         <UploadImages :setStepsActive1="setStepsActive1" :setStepsActive0="setStepsActive0" />
                     </el-tab-pane>
                     <el-tab-pane label="视频">视频</el-tab-pane>
-                    <el-tab-pane label="实时">实时</el-tab-pane>
+                    <el-tab-pane label="实时">
+                        <el-row>
+                            <el-col :span="9" :offset="4">
+                                <img src="http://127.0.0.1:5000/matching/video_feed" style="max-height: 33vh;">
+                            </el-col>
+
+                            <el-col :span="1" style="display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 2.5vw;
+                        height: auto;
+                        display: flex;">
+                                    <SvgIcon iconName="icon-Right"></SvgIcon>
+                                </div>
+                            </el-col>
+
+                            <el-col :span="6">
+                                <div class="form-cantainer" style="margin-left: 20px;">
+                                    <div class="form-title">
+                                        <el-text style="font-size: 20px; color: #409EFF;">
+                                            选择方法
+                                        </el-text>
+                                    </div>
+                                    <div class="form">
+                                        <el-form :model="form" label-position="right" label-width="auto" size="small">
+                                            <el-form-item label="算法分类:">
+                                                <el-radio-group v-model="form.class" label-position="right">
+                                                    <el-radio-button label="稀疏" value="稀疏" />
+                                                    <el-radio-button label="半稀疏" value="半稀疏" />
+                                                    <el-radio-button label="稠密" value="稠密" />
+                                                </el-radio-group>
+                                            </el-form-item>
+                                            <el-form-item label="匹配算法:">
+                                                <el-radio-group v-model="form.matchmethod">
+                                                    <el-radio-button label="LoFTR" value="LoFTR" />
+                                                    <el-radio-button label="SuperGlue" value="SuperGlue"
+                                                        v-if="form.class === '稀疏'" />
+                                                    <el-radio-button label="BF" value="BF" v-if="form.class === '稀疏'" />
+                                                    <el-radio-button label="FLANN" value="FLANN"
+                                                        v-if="form.class === '稀疏'" />
+                                                </el-radio-group>
+                                            </el-form-item>
+                                            <el-form-item label="检测器算法:" v-if="form.class === '稀疏'">
+                                                <el-radio-group v-model="form.kptmethod">
+                                                    <el-radio-button label="SuperPoint" value="SuperPoint" />
+                                                    <el-radio-button label="SIFT" value="SIFT"
+                                                        :disabled="form.matchmethod === 'SuperGlue'" />
+                                                    <el-radio-button label="ORB" value="ORB"
+                                                        :disabled="form.matchmethod === 'SuperGlue'" />
+                                                </el-radio-group>
+                                            </el-form-item>
+                                            <el-form-item label="算法场景:" v-if="showScene()">
+                                                <el-radio-group v-model="form.scene">
+                                                    <el-radio-button label="室内" value="室内" />
+                                                    <el-radio-button label="室外" value="室外" />
+                                                </el-radio-group>
+                                            </el-form-item>
+
+                                            <el-row style="height: 14px;">
+                                                <el-col :offset="10">
+                                                    <el-text
+                                                        style="font-size: 12px; color: var(--el-text-color-secondary); line-height: 14px;">
+                                                        当前数据源为: {{ tabName }}
+                                                    </el-text>
+                                                </el-col>
+                                            </el-row>
+                                            <br />
+
+                                            <el-form-item label="基准配置:" v-if="tabName === '多张图片'">
+                                                <div class="custom-style">
+                                                    <el-segmented v-model="form.fix" :options="['首张作为基准', '前张作为基准']" />
+                                                </div>
+                                            </el-form-item>
+                                        </el-form>
+                                    </div>
+                                    <div class="submit">
+                                        <el-button type="primary" style="width: 50%;" @click="matching">
+                                            开始匹配
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </el-col>
+                        </el-row>
+
+                    </el-tab-pane>
                 </el-tabs>
             </el-col>
         </el-row>
 
-        <el-row>
+        <el-row v-if="tabName !== '实时'">
             <el-col :span="2" :offset="3" style="display: flex; justify-content: center;">
                 <div style="
                     margin: 10px 10px;
@@ -43,7 +125,19 @@
             </el-col>
         </el-row>
 
-        <el-row style="height: 33vh;">
+        <el-row v-if="tabName === '实时'">
+            <el-col :span="2" :offset="10" style="display: flex; justify-content: center;">
+                <div style="
+                    margin: 10px 10px;
+                    width: auto;
+                    height: 3vh;
+                    display: flex;">
+                    <SvgIcon icon-name="icon-Down" />
+                </div>
+            </el-col>
+        </el-row>
+
+        <el-row style="height: 33vh;" v-if="tabName !== '实时'">
             <el-col :span="6">
                 <div class="form-cantainer">
                     <div class="form-title">
@@ -120,11 +214,12 @@
             <el-col :span="17">
                 <div class="result" v-loading="resLoading" element-loading-text="特征匹配中...">
                     <el-empty description="结果将展示在这里" v-if="result_path_url === ''" />
+
                     <div v-if="result_path_url !== ''" id="resImg"
                         style="display: flex; align-items: center; justify-content: center;">
 
                         <img :src="result_path_url" alt="展示结果失败" v-if="tabName === '两张图片'"
-                            style="height: 98%; width: 98%;" />
+                            style="max-height: 98%; max-width: 98%;" />
 
                         <video autoplay loop controls :key="result_path_url"
                             v-if="tabName === '多张图片' || tabName === '视频'" style="height: 100%; width: 100%;">
@@ -133,6 +228,14 @@
                         </video>
 
                     </div>
+                </div>
+            </el-col>
+        </el-row>
+
+        <el-row v-if="tabName === '实时'">
+            <el-col :span="24" style="display: flex; justify-content: center;">
+                <div class="result" style="height: 34vh;">
+                    <el-empty description="结果将展示在这里" v-if="result_path_url === ''" />
                 </div>
             </el-col>
         </el-row>
@@ -154,6 +257,8 @@ import UploadImagePair from "@/components/matching/UploadImagePair.vue";
 let tabName = ref('两张图片')
 const tabClick = (tab: any) => {
     tabName.value = tab.props.label
+    result_path_url.value = ''
+    result_path.value = ''
 }
 // 步骤条
 let stepsActive = ref(0)

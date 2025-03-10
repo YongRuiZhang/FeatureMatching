@@ -42,6 +42,8 @@
 # --------------------------------------------------------------------*/
 # %BANNER_END%
 
+# 基于 Magic Leap 的代码修改
+
 from pathlib import Path
 import time
 from collections import OrderedDict
@@ -184,7 +186,7 @@ class VideoStreamer:
         """
         if self.i == self.max_length:
             return (None, False)
-        if self.camera:
+        if self.camera:  # 除了目录都是调用这个方法
             if self._ip_camera:
                 # Wait for first image, making sure we haven't exited
                 while self._ip_grabbed is False and self._ip_exited is False:
