@@ -221,45 +221,6 @@ def upload_video():
         return res(code='500', msg='视频上传失败', data=str(e))
 
 
-## 实时
-CAP = None
-
-
-def getRealTimeImage():
-    global CAP
-    CAP = cv2.VideoCapture(0)
-    fps = 10
-    while True:
-        return_value, frame = CAP.read()
-        if not return_value:
-            break
-
-        # 将原始帧和处理后的帧编码为 JPEG
-        _, original_image = cv2.imencode('.jpg', frame)
-
-        # 生成原始帧的 HTTP 响应格式
-        original_frame = (
-                b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + original_image.tobytes() + b'\r\n'
-        )
-
-        yield original_frame
-        time.sleep(1 / fps)
-
-
-@matching_api.route('/video_feed')
-def video_feed():
-    return Response(getRealTimeImage(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
-@matching_api.delete('/video_feed')
-def closeCamera():
-    global CAP
-    if CAP is not None:
-        CAP.release()
-        CAP = None
-    return res(code='200')
-
 @matching_api.post('/images')
 def matching_images():
     try:
@@ -301,3 +262,45 @@ def matching_images():
         return res(200, msg='特征匹配成功', data={'save_path': save_path, 'save_path_url': save_path_url})
     except Exception as e:
         return res(code='500', msg='特征匹配失败', data=str(e))
+
+
+## 实时
+CAP = None
+
+
+def getRealTimeImage():
+    global CAP
+    CAP = cv2.VideoCapture(0)
+    fps = 10
+    while True:
+        return_value, frame = CAP.read()
+        if not return_value:
+            break
+
+        # 将原始帧和处理后的帧编码为 JPEG
+        _, original_image = cv2.imencode('.jpg', frame)
+
+        # 生成原始帧的 HTTP 响应格式
+        original_frame = (
+                b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + original_image.tobytes() + b'\r\n'
+        )
+
+        yield original_frame
+        time.sleep(1 / fps)
+
+
+@matching_api.route('/video_feed')
+def video_feed():
+    return Response(getRealTimeImage(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@matching_api.delete('/video_feed')
+def closeCamera():
+    global CAP
+    if CAP is not None:
+        CAP.release()
+        CAP = None
+    return res(code='200')
+
+

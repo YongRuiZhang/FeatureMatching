@@ -13,7 +13,7 @@ from utils.Res import res
 
 mosaic_api = Blueprint('mosaic', __name__, url_prefix='/mosaic')
 
-
+# TODO：实现图像拼接
 @mosaic_api.post('/')
 def mosaic():
     try:
