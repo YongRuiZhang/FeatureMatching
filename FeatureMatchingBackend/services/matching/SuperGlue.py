@@ -23,7 +23,7 @@ def matching_pair(path, img1_path, img2_path, scene,
                    keypoint_threshold=0.005,
                    nms_radius=4,
                    sinkhorn_iterations=20,
-                   match_threshold=0.2, fps=1):
+                   match_threshold=0.2, fps=1, is_save=True, is_process=True, timer=None):
 
     device = 'cpu'
 
@@ -48,16 +48,22 @@ def matching_pair(path, img1_path, img2_path, scene,
     matching = Matching(config).eval().to(device)
     keys = ['keypoints', 'scores', 'descriptors']
 
-    timer = AverageTimer(newline=True)
+    if timer is None:
+        timer = AverageTimer(newline=True)
 
-    img1 = cv2.imread(img1_path, 0)
-    img2 = cv2.imread(img2_path, 0)
-    w, h = img1.shape[1], img1.shape[0]
-    w_new, h_new = process_resize(w, h, [640, 480])
-    img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
-    img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    if is_process:
+        img1 = cv2.imread(img1_path, 0)
+        img2 = cv2.imread(img2_path, 0)
+        w, h = img1.shape[1], img1.shape[0]
+        w_new, h_new = process_resize(w, h, [640, 480])
+        img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    else:
+        img1 = img1_path
+        img2 = img2_path
     img1_tensor = frame2tensor(img1, device)
     img2_tensor = frame2tensor(img2, device)
+
     timer.update('process images')
 
     with torch.no_grad():
@@ -71,30 +77,34 @@ def matching_pair(path, img1_path, img2_path, scene,
     valid = matches > -1
     mkpts0 = kpts0[valid]
     mkpts1 = kpts1[matches[valid]]
-    color = cm.jet(confidence[valid])
-    text = [
-        'SuperPoint_SuperGlue',
-        'Keypoints: {}:{}'.format(len(kpts0), len(kpts1)),
-        'Matches: {}'.format(len(mkpts0))
-    ]
-    k_thresh = matching.superpoint.config['keypoint_threshold']
-    m_thresh = matching.superglue.config['match_threshold']
-    img1_name = os.path.basename(img1_path)
-    img2_name = os.path.basename(img2_path)
-    small_text = [
-        'Keypoint Threshold: {:.4f}'.format(k_thresh),
-        'Match Threshold: {:.2f}'.format(m_thresh),
-        'Image Pair: {}:{}'.format(img1_name, img2_name),
-    ]
-    save_dir = os.path.join(path, 'res')
-    os.makedirs(save_dir, exist_ok=True)
 
-    save_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}.png".format(scene))
-    out = make_matching_plot_fast(
-        img1, img2, mkpts0, mkpts1, color, text, kpts0, kpts1,
-        path=save_path, show_keypoints=True, small_text=small_text)
+    if is_save:
+        color = cm.jet(confidence[valid])
+        text = [
+            'SuperPoint_SuperGlue',
+            'Keypoints: {}:{}'.format(len(kpts0), len(kpts1)),
+            'Matches: {}'.format(len(mkpts0))
+        ]
+        k_thresh = matching.superpoint.config['keypoint_threshold']
+        m_thresh = matching.superglue.config['match_threshold']
+        img1_name = os.path.basename(img1_path)
+        img2_name = os.path.basename(img2_path)
+        small_text = [
+            'Keypoint Threshold: {:.4f}'.format(k_thresh),
+            'Match Threshold: {:.2f}'.format(m_thresh),
+            'Image Pair: {}:{}'.format(img1_name, img2_name),
+        ]
+        save_dir = os.path.join(path, 'res')
+        os.makedirs(save_dir, exist_ok=True)
 
-    return save_path
+        save_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}.png".format(scene))
+        out = make_matching_plot_fast(
+            img1, img2, mkpts0, mkpts1, color, text, kpts0, kpts1,
+            path=save_path, show_keypoints=True, small_text=small_text)
+
+        return save_path
+    else:
+        return kpts0, kpts1, mkpts0, mkpts1
 
 
 def matching_images(path, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, max_keypoints=-1,

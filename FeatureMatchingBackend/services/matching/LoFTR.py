@@ -19,7 +19,8 @@ from DLModels.LoFTR.utils.cvpr_ds_config import default_cfg
 from utils.matching_utils import (AverageTimer, VideoStreamer,
                                   frame2tensor, make_matching_plot_fast, process_resize)
 
-def withoutKpts_pair(path, img1_path, img2_path, scene):
+
+def withoutKpts_pair(path, img1_path, img2_path, scene, is_save=True, is_process=True, timer=None):
     device = 'cpu'
 
     if scene == '室内':
@@ -33,14 +34,19 @@ def withoutKpts_pair(path, img1_path, img2_path, scene):
         matcher.load_state_dict(torch.load("weights/LoFTR/outdoor_ds.ckpt")['state_dict'])
         matcher = matcher.eval()
 
-    timer = AverageTimer(newline=True)
+    if type is None:
+        timer = AverageTimer()
 
-    img1 = cv2.imread(img1_path, 0)
-    img2 = cv2.imread(img2_path, 0)
-    w, h = img1.shape[1], img1.shape[0]
-    w_new, h_new = process_resize(w, h, [640, 480])
-    img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
-    img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    if is_save:
+        img1 = cv2.imread(img1_path, 0)
+        img2 = cv2.imread(img2_path, 0)
+        w, h = img1.shape[1], img1.shape[0]
+        w_new, h_new = process_resize(w, h, [640, 480])
+        img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    else:
+        img1 = img1_path
+        img2 = img2_path
     img1_tensor = frame2tensor(img1, device)
     img2_tensor = frame2tensor(img2, device)
     timer.update('process images')
@@ -54,27 +60,31 @@ def withoutKpts_pair(path, img1_path, img2_path, scene):
         mconf = batch['mconf'].cpu().numpy()
     timer.update('matching')
 
-    color = cm.jet(mconf)
-    text = [
-        'LoFTR',
-        'Matches: {}'.format(len(mkpts0)),
-    ]
-    small_text = timer.print(small_text=[])
-    img1_name = os.path.basename(img1_path)
-    img2_name = os.path.basename(img2_path)
-    small_text.append('matches_{}_{}'.format(img1_name, img2_name))
+    if is_save:
+        color = cm.jet(mconf)
+        text = [
+            'LoFTR',
+            'Matches: {}'.format(len(mkpts0)),
+        ]
+        small_text = timer.print(small_text=[])
+        img1_name = os.path.basename(img1_path)
+        img2_name = os.path.basename(img2_path)
+        small_text.append('matches_{}_{}'.format(img1_name, img2_name))
 
-    save_dir = os.path.join(path, 'res')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "LoFTR_{}.png".format(scene))
-    out = make_matching_plot_fast(
-        img1, img2, mkpts0=mkpts0, mkpts1=mkpts1, color=color, text=text,
-        path=save_path, show_keypoints=False, small_text=small_text, margin=0)
+        save_dir = os.path.join(path, 'res')
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, "LoFTR_{}.png".format(scene))
+        out = make_matching_plot_fast(
+            img1, img2, mkpts0=mkpts0, mkpts1=mkpts1, color=color, text=text,
+            path=save_path, show_keypoints=False, small_text=small_text, margin=0)
 
-    return save_path
+        return save_path
+    else:
+        return mkpts0, mkpts1
 
 
-def withoutKpts_images(path, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
+def withoutKpts_images(path, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None,
+                       fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -99,7 +109,8 @@ def withoutKpts_images(path, scene, fix=True, type='多张图片', image_glob=No
     elif type == '视频':
         file_names = os.listdir(path)
         file_path = \
-        [os.path.join(path, file_name) for file_name in file_names if os.path.isfile(os.path.join(path, file_name))][0]
+            [os.path.join(path, file_name) for file_name in file_names if
+             os.path.isfile(os.path.join(path, file_name))][0]
         vs = VideoStreamer(file_path, resize=resize,
                            skip=skip, image_glob=image_glob, max_length=max_length)
     frame, _ = vs.next_frame()

@@ -149,102 +149,44 @@ function rightUploadSuccess(response: any) {
     }
 }
 
-const leftRemoveFile = async (uploadFile: any) => {
-    await axios.delete(api.value, {
-        data: {
-            'path': dir_path.value,
-            'name': uploadFile.name
-        }
-    }).then(res => {
-        let response: responseType = res.data
-
-        if (response.code === 200) {
-            Object.assign(left, {
-                havePic: false,
-                imagePath: '',
-                imagePath_url: '',
-            })
-
-            store.removeLeftPath()
-
-            if (!right.havePic) {
-                dir_path.value = ''
-                uid.value = ''
-                store.init()
-                props.setStepsActive0()
-            }
-
-            ElMessage({
-                message: response.msg,
-                type: 'success'
-            })
-        } else if (response.code === 300 || response.code === 500) {
-            ElNotification({
-                title: response.msg,
-                message: response.data,
-                type: 'error'
-            })
-        }
-    })
-}
-
-async function rightRemoveFile(uploadFile: any) {
-    await axios.delete(api.value, {
-        data: {
-            'path': dir_path.value,
-            'name': uploadFile.name
-        }
-    }).then(res => {
-        let response: responseType = res.data
-
-        if (response.code === 200) {
-            Object.assign(right, {
-                havePic: false,
-                imagePath: '',
-                imagePath_url: '',
-            })
-
-            store.removeRightPath()
-
-            if (!left.havePic) {
-                dir_path.value = ''
-                uid.value = ''
-                store.init()
-                props.setStepsActive0()
-            }
-
-            ElMessage({
-                message: response.msg,
-                type: 'success'
-            })
-        } else if (response.code === 300 || response.code === 500) {
-            ElNotification({
-                title: response.msg,
-                message: response.data,
-                type: 'error'
-            })
-        }
-    })
-}
-
-function init() {
-
+const leftRemoveFile = () => {
     Object.assign(left, {
         havePic: false,
         imagePath: '',
         imagePath_url: '',
     })
 
+    store.removeLeftPath()
+
+    if (!right.havePic) {
+        dir_path.value = ''
+        uid.value = ''
+        store.init()
+        props.setStepsActive0()
+    }
+}
+
+function rightRemoveFile() {
     Object.assign(right, {
         havePic: false,
         imagePath: '',
         imagePath_url: '',
     })
 
-    uid.value = ''
-    dir_path.value = ''
+    store.removeRightPath()
 
-    store.init()
+    if (!left.havePic) {
+        dir_path.value = ''
+        uid.value = ''
+        store.init()
+        props.setStepsActive0()
+    }
+}
+
+function init() {
+
+    leftRemoveFile()
+    rightRemoveFile()
 }
 
 defineExpose({

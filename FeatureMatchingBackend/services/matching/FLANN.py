@@ -45,17 +45,18 @@ def detection_FLANN(frame1, frame2, kptsMethod):
             keypoint = cv2.KeyPoint(x, y, 1)
             kpts2_list.append(keypoint)
         kpts2 = kpts2_list
+
         des1 = des1.astype(np.float32).T
         des2 = des2.astype(np.float32).T
 
     return kpts1, kpts2, des1, des2
 
 
-def matching_FLANN(flann, des1, des2):
+def matching_FLANN(flann, des1, des2, k=0.7):
     matches = flann.knnMatch(des1, des2, 2)
     better_matches = []
     for i, (m, n) in enumerate(matches):
-        if m.distance < 0.7 * n.distance:
+        if m.distance < k * n.distance:
             better_matches.append(m)
 
     return better_matches
@@ -91,38 +92,50 @@ def draw_matching(frame1, frame2, kpts1, kpts2, better_matches, kptsMethod, smal
     return out
 
 
-def matching_FLANN_pair(path, img1_path, img2_path, kptsMethod):
+def matching_FLANN_pair(path, img1_path, img2_path, kptsMethod, is_save=True, is_process=True, timer=None):
     index_params = dict(algorithm=1, trees=5)
     search_params = dict(checks=50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
 
-    timer = AverageTimer()
-    img1 = cv2.imread(img1_path, 0)
-    img2 = cv2.imread(img2_path, 0)
-    w, h = img1.shape[1], img1.shape[0]
-    w_new, h_new = process_resize(w, h, [640, 480])
-    img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
-    img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
-    timer.update('process images')
+    if timer is None:
+        timer = AverageTimer()
+    if is_process:
+        img1 = cv2.imread(img1_path, 0)
+        img2 = cv2.imread(img2_path, 0)
+        w, h = img1.shape[1], img1.shape[0]
+        w_new, h_new = process_resize(w, h, [640, 480])
+        img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        timer.update('process images')
+    else:
+        img1 = img1_path
+        img2 = img2_path
 
     kpts1, kpts2, des1, des2 = detection_FLANN(img1, img2, kptsMethod)
     timer.update('detect')
 
-    matches = matching_FLANN(flann, des1, des2)
+    if kptsMethod == 'SuperPoint':
+        matches = matching_FLANN(flann, des1, des2, k=0.4)
+    else:
+        matches = matching_FLANN(flann, des1, des2, k=0.7)
     timer.update('matching')
 
-    small_text = timer.print(small_text=[])
-    out = draw_matching(img1, img2, kpts1, kpts2, matches, kptsMethod, small_text)
+    if is_save:
+        small_text = timer.print(small_text=[])
+        out = draw_matching(img1, img2, kpts1, kpts2, matches, kptsMethod, small_text)
 
-    save_dir = os.path.join(path, 'res')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "FLANN_{}.png".format(kptsMethod))
-    cv2.imwrite(save_path, out)
+        save_dir = os.path.join(path, 'res')
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, "FLANN_{}.png".format(kptsMethod))
+        cv2.imwrite(save_path, out)
 
-    return save_path
+        return save_path
+    else:
+        return kpts1, kpts2, des1, des2, matches
 
 
-def matching_FLANN_images(path, kptsMethod, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
+def matching_FLANN_images(path, kptsMethod, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000,
+                          resize=None, fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -138,7 +151,8 @@ def matching_FLANN_images(path, kptsMethod, fix=True, type='多张图片', image
     elif type == '视频':
         file_names = os.listdir(path)
         file_path = \
-        [os.path.join(path, file_name) for file_name in file_names if os.path.isfile(os.path.join(path, file_name))][0]
+            [os.path.join(path, file_name) for file_name in file_names if
+             os.path.isfile(os.path.join(path, file_name))][0]
         vs = VideoStreamer(file_path, resize=resize,
                            skip=skip, image_glob=image_glob, max_length=max_length)
 

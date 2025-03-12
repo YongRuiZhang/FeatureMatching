@@ -65,25 +65,6 @@ def upload_image():
         return res(code='500', msg='图片上传失败', data=str(e))
 
 
-@matching_api.delete('/upload_image')
-def delete_image():
-    try:
-        path = request.json.get('path')
-        name = request.json.get('name')
-        filename = os.path.join(path, name)
-        if os.path.exists(filename):
-            os.remove(filename)
-
-        remaining_files = os.listdir(path)
-
-        if len(remaining_files) == 0:
-            os.rmdir(path)
-
-        return res(msg='删除成功')
-    except Exception as e:
-        return res(code='500', msg='图片删除失败，建议刷新网页后重试', data=str(e))
-
-
 @matching_api.post('/image')
 def matching_image():
     try:

@@ -84,16 +84,21 @@ def draw_matching(frame1, frame2, kpts1, kpts2, matches, kptsMethod, small_text)
     return out
 
 
-def matching_BF_pair(path, img1_path, img2_path, kptsMethod):
+def matching_BF_pair(path, img1_path, img2_path, kptsMethod, is_save=True, is_process=True, timer=None):
     bf = cv2.BFMatcher(cv2.NORM_L2, True)
 
-    timer = AverageTimer()
-    img1 = cv2.imread(img1_path, 0)
-    img2 = cv2.imread(img2_path, 0)
-    w, h = img1.shape[1], img1.shape[0]
-    w_new, h_new = process_resize(w, h, [640, 480])
-    img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
-    img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    if timer is None:
+        timer = AverageTimer()
+    if is_process:
+        img1 = cv2.imread(img1_path, 0)
+        img2 = cv2.imread(img2_path, 0)
+        w, h = img1.shape[1], img1.shape[0]
+        w_new, h_new = process_resize(w, h, [640, 480])
+        img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+    else:
+        img1 = img1_path
+        img2 = img2_path
     timer.update('process images')
 
     kpts1, kpts2, des1, des2 = detection_BF(img1, img2, kptsMethod)
@@ -102,15 +107,18 @@ def matching_BF_pair(path, img1_path, img2_path, kptsMethod):
     matches = matching_BF(bf, des1, des2)
     timer.update('matching')
 
-    small_text = timer.print(small_text=[])
-    out = draw_matching(img1, img2, kpts1, kpts2, matches, kptsMethod, small_text)
+    if is_save:
+        small_text = timer.print(small_text=[])
+        out = draw_matching(img1, img2, kpts1, kpts2, matches, kptsMethod, small_text)
 
-    save_dir = os.path.join(path, 'res')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "BF_{}.png".format(kptsMethod))
-    cv2.imwrite(save_path, out)
+        save_dir = os.path.join(path, 'res')
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, "BF_{}.png".format(kptsMethod))
+        cv2.imwrite(save_path, out)
 
-    return save_path
+        return save_path
+    else:
+        return kpts1, kpts2, des1, des2, matches
 
 
 def matching_BF_images(path, kptsMethod, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):

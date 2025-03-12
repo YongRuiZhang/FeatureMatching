@@ -18,6 +18,7 @@ coverage
 /cypress/screenshots/
 src/assets/detection/
 src/assets/matching/
+src/assets/mosaic/
 
 # Editor directories and files
 .vscode/*

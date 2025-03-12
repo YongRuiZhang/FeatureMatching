@@ -128,7 +128,7 @@ def detect():
             img, num_kpts, RESKPTS = Shi_Tomasi.detection_shi_tomasi(img, maxCorners, qualityLevel, minDistance)
             descriptors_path = ''
         elif method == "SIFT":
-            img, num_kpts, RESKPTS, des, _ = SIFT.detection_SIFT(img)
+            img, num_kpts, RESKPTS, des, _ = SIFT.detection_SIFT(img, True)
 
             if not os.path.exists(desc_file_path):
                 np.save(desc_file_path, des)
@@ -136,7 +136,7 @@ def detect():
             else:
                 descriptors_path = ''
         elif method == "ORB":
-            img, num_kpts, RESKPTS, des, _ = ORB.detection_ORB(img)
+            img, num_kpts, RESKPTS, des, _ = ORB.detection_ORB(img, True)
 
             if not os.path.exists(desc_file_path):
                 np.save(desc_file_path, des)

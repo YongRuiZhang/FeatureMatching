@@ -10,15 +10,16 @@ import cv2
 import numpy as np
 
 
-def detection_ORB(img):
+def detection_ORB(img, draw=False):
     if len(img.shape) > 2:
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     else:
         gray_img = img
 
-    orb = cv2.ORB_create()
+    orb = cv2.ORB_create(nfeatures=300)
     kpts, des = orb.detectAndCompute(gray_img, None)
-    cv2.drawKeypoints(gray_img, kpts, img)
+    if draw:
+        cv2.drawKeypoints(gray_img, kpts, img)
 
     keypoints = np.array([(kp.pt[0], kp.pt[1], kp.size, kp.angle) for kp in kpts])
 

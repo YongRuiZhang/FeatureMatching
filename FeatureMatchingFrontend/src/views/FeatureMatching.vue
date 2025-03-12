@@ -264,7 +264,8 @@
                 </el-col>
 
                 <el-col :span="17">
-                    <div class="result" v-loading="resLoading" element-loading-text="特征匹配中...">
+                    <div class="result" v-loading="resLoading && { text: '正在匹配中: ' + formatTime(elapsedTime) }"
+                        :element-loading-spinner="true" :element-loading-background="true">
                         <el-empty description="结果将展示在这里" v-if="result_path_url === ''" />
 
                         <div v-if="result_path_url !== ''" id="resImg" style="height: 100%; width: 100%;">
@@ -286,7 +287,7 @@
                                 <el-col :span="4" :offset="1">
                                     <div class="result-text">
                                         <el-text>
-                                            总耗时: 0.1s
+                                            总耗时: {{ formatTime(elapsedTime) }}
                                         </el-text>
                                     </div>
                                 </el-col>
@@ -414,6 +415,39 @@ let resLoading = ref(false) // 是否显示加载动画
 let result_path = ref('') // 结果文件路径
 let result_path_url = ref('') // 结果文件路径 url
 
+const isRunning = ref(false); // 是否正在计时
+const elapsedTime = ref(0); // 已耗时（以毫秒为单位）
+let intervalId: any = null; // setInterval的ID
+
+const formatTime = (milliseconds: any) => {
+    const seconds = milliseconds / 1000;
+    return `${String(seconds)} s`;
+};
+
+// 启动计时器
+const startTimer = () => {
+    console.log(1);
+
+    if (isRunning.value) return; // 如果已经在计时，直接返回
+    isRunning.value = true; // 更新状态为“正在计时”
+    intervalId = setInterval(() => {
+        elapsedTime.value += 10;
+    }, 10);
+};
+
+// 暂停计时器
+const pauseTimer = () => {
+    isRunning.value = false; // 更新状态为“暂停”
+    clearInterval(intervalId); // 清除计时器
+};
+
+// 重置计时器
+const resetTimer = () => {
+    isRunning.value = false; // 更新状态为“已重置”
+    clearInterval(intervalId); // 清除计时器
+    elapsedTime.value = 0; // 将已耗时设置为0
+}
+
 // 匹配两张图片
 const matchingPairs = async () => {
     const imagePairStore = useUploadImagePairStore()
@@ -436,6 +470,8 @@ const matchingPairs = async () => {
         'rightpath': rightpath,
         'form': form
     }
+    resetTimer()
+    startTimer()
     await axios.post('http://127.0.0.1:5000/matching/image', postForm)
         .then(res => {
             let response: responseType = res.data
@@ -456,6 +492,7 @@ const matchingPairs = async () => {
                 })
             }
         })
+    pauseTimer()
     resLoading.value = false
 }
 
@@ -491,6 +528,8 @@ const matchingIamgesAndVideo = async () => {
         'type': tabName.value,
         'form': form,
     }
+    resetTimer()
+    startTimer()
     ElMessage.success('正在匹配，请稍等')
     await axios.post('http://127.0.0.1:5000/matching/images', postForm)
         .then(res => {
@@ -512,12 +551,8 @@ const matchingIamgesAndVideo = async () => {
                 })
             }
         })
+    pauseTimer()
     resLoading.value = false
-}
-
-// 匹配视频
-const matchingVideo = async () => {
-    await axios.post('http://127.0.0.1:5000/matching', form)
 }
 
 // 实时匹配
@@ -535,7 +570,6 @@ const matching = async () => {
     } else if (tabName.value === '实时') {
         matchingRealTime()
     }
-
 }
 </script>
 
