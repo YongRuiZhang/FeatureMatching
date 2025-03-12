@@ -135,9 +135,7 @@ def mosaic_pair(path, img1, img2, cls, kptsMethod, matchMethod, scence, scale):
 
     # 拼接两幅图像
     panorama = np.copy(warped_image2)
-    cv2.imwrite('pan_{}_{}.png'.format(kptsMethod, matchMethod), panorama)
     panorama[0:image1.shape[0], 0:image1.shape[1]] = image1
-    cv2.imwrite('panorama_{}_{}.png'.format(kptsMethod, matchMethod), panorama)
 
     # 去除黑色边缘
     out = crop_black_edges(panorama)
