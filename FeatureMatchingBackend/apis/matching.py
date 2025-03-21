@@ -12,7 +12,7 @@ import uuid
 
 import cv2
 import numpy as np
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, jsonify, after_this_request, send_file
 from flask import current_app
 from werkzeug.utils import secure_filename
 
@@ -22,8 +22,8 @@ from utils.checkFileType import allowed_pic_file, allowed_video_file
 
 matching_api = Blueprint('matching_api', __name__)
 
-
-# 图片对
+# ----------- 图片对 ------------
+# 上传
 @matching_api.post('/upload_image')
 def upload_image():
     try:
@@ -65,9 +65,16 @@ def upload_image():
         return res(code='500', msg='图片上传失败', data=str(e))
 
 
+# 匹配
 @matching_api.post('/image')
 def matching_image():
     try:
+        K = np.array([
+            [1978.06, 0., 540.],
+            [0., 1978.06, 960.],
+            [0., 0., 1.]
+        ])
+
         path = request.json.get('path')
         dir_name = request.json.get('dir_name')
         leftpath = request.json.get('leftpath')
@@ -82,25 +89,32 @@ def matching_image():
             matchMethod = form['matchmethod']
             if matchMethod == 'SuperGlue':
                 scene = form['scene']
-                save_path = SuperGlue.matching_pair(path, leftpath, rightpath, scene)
+                save_path, save_matches_path, save_poses_path = SuperGlue.matching_pair(path, leftpath, rightpath, K, scene)
             elif matchMethod == 'LoFTR':
                 scene = form['scene']
             elif matchMethod == 'BF':
-                save_path = BF.matching_BF_pair(path, leftpath, rightpath, kptMethod)
+                save_path, save_matches_path, save_poses_path = BF.matching_BF_pair(path, leftpath, rightpath, kptMethod, K)
             elif matchMethod == 'FLANN':
-                save_path = FLANN.matching_FLANN_pair(path, leftpath, rightpath, kptMethod)
+                save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_pair(path, leftpath, rightpath, kptMethod, K)
         elif cls == '半稀疏':
             matchMethod = form['matchmethod']
-            scene = form['scene']
-            save_path = LoFTR.withoutKpts_pair(path, leftpath, rightpath, scene)
+            if matchMethod == 'LoFTR':
+                scene = form['scene']
+                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_pair(path, leftpath, rightpath, K, scene)
 
         save_path_url = save_path_url + os.path.basename(save_path)
-        return res(200, msg='特征匹配成功', data={'save_path': save_path, 'save_path_url': save_path_url})
+        return res(200, msg='特征匹配成功', data={
+            'save_path': save_path,
+            'save_path_url': save_path_url,
+            'save_matches_path': save_matches_path,
+            'save_poses_path': save_poses_path
+        })
     except Exception as e:
         return res(code='500', msg='特征匹配失败', data=str(e))
 
 
-# 多张图片
+# ----------- 多张图片 ----------
+# 上传
 @matching_api.post('/upload_images')
 def upload_images():
     try:
@@ -145,6 +159,7 @@ def upload_images():
         return res(code='500', msg='图片上传失败', data=str(e))
 
 
+# 删除
 @matching_api.delete('/upload_images')
 def delete_images():
     try:
@@ -164,7 +179,8 @@ def delete_images():
         return res(code='500', msg='图片删除失败，建议刷新网页后重试', data=str(e))
 
 
-# 视频
+# ---------- 视频 ----------
+# 上传
 @matching_api.post('/upload_video')
 def upload_video():
     try:
@@ -201,10 +217,16 @@ def upload_video():
     except Exception as e:
         return res(code='500', msg='视频上传失败', data=str(e))
 
-
+# 匹配
 @matching_api.post('/images')
 def matching_images():
     try:
+        K = np.array([
+            [1978.06, 0., 540.],
+            [0., 1978.06, 960.],
+            [0., 0., 1.]
+        ])
+
         path = request.json.get('path')
         dir_name = request.json.get('dir_name')
         type = request.json.get('type')
@@ -227,20 +249,27 @@ def matching_images():
             matchMethod = form['matchmethod']
             if matchMethod == 'SuperGlue':
                 scene = form['scene']
-                save_path = SuperGlue.matching_images(path, scene, fix, type, skip=skip)
+                save_path, save_matches_path, save_poses_path = SuperGlue.matching_images(path, scene, K, fix, type,
+                                                                                          skip=skip)
             elif matchMethod == 'LoFTR':
                 scene = form['scene']
             elif matchMethod == 'BF':
-                save_path = BF.matching_BF_images(path, kptMethod, fix, type, skip=skip)
+                save_path, save_matches_path, save_poses_path = BF.matching_BF_images(path, kptMethod, K, fix, type, skip=skip)
             elif matchMethod == 'FLANN':
-                save_path = FLANN.matching_FLANN_images(path, kptMethod, fix, type, skip=skip)
+                save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_images(path, kptMethod, K, fix, type, skip=skip)
         elif cls == '半稀疏':
             matchMethod = form['matchmethod']
-            scene = form['scene']
-            save_path = LoFTR.withoutKpts_images(path, scene, fix, type, skip=skip)
+            if matchMethod == 'LoFTR':
+                scene = form['scene']
+                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_images(path, K, scene, fix, type, skip=skip)
 
         save_path_url = save_path_url + os.path.basename(save_path)
-        return res(200, msg='特征匹配成功', data={'save_path': save_path, 'save_path_url': save_path_url})
+        return res(200, msg='特征匹配成功', data={
+            'save_path': save_path,
+            'save_path_url': save_path_url,
+            'save_matches_path': save_matches_path,
+            'save_poses_path': save_poses_path
+        })
     except Exception as e:
         return res(code='500', msg='特征匹配失败', data=str(e))
 
@@ -285,3 +314,22 @@ def closeCamera():
     return res(code='200')
 
 
+@matching_api.post('/download')
+def download():
+    try:
+        dfilepath = request.json.get('dfilepath')
+        print(dfilepath)
+        download_name = os.path.basename(dfilepath)
+        print(download_name)
+
+        if not os.path.exists(dfilepath):
+            return res(code='300', msg='下载失败', data="文件找不到了")
+
+        @after_this_request
+        def add_headers(response):
+            response.headers['Access-Control-Expose-Headers'] = 'Content-Disposition'
+            return response
+
+        return send_file(dfilepath, as_attachment=True, download_name=download_name)
+    except Exception as e:
+        return res(code='500', msg='下载失败', data=str(e))

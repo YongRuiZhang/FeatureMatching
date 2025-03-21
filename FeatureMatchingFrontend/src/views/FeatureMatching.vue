@@ -128,7 +128,7 @@
                                                     <el-input v-model="form.skip" placeholder="1"
                                                         style="width: 40px; margin-right: 5px;" />
                                                     <el-tooltip class="box-item" effect="dark"
-                                                        content="匹配时跳过图片数，视频建议30，即（2 fps）" placement="bottom">
+                                                        content="匹配时跳过图片(帧)数, 视频建议30" placement="bottom">
                                                         <el-icon>
                                                             <SvgIcon icon-name="icon-tishi" />
                                                         </el-icon>
@@ -266,12 +266,13 @@
                 <el-col :span="17">
                     <div class="result" v-loading="resLoading && { text: '正在匹配中: ' + formatTime(elapsedTime) }"
                         :element-loading-spinner="true" :element-loading-background="true">
-                        <el-empty description="结果将展示在这里" v-if="result_path_url === ''" />
+
+                        <el-empty description="结果将展示在这里" v-if="result_path_url === ''"
+                            style="height: 100%; width: 100%;" />
 
                         <div v-if="result_path_url !== ''" id="resImg" style="height: 100%; width: 100%;">
-
-                            <el-row>
-                                <el-col :span="18" :offset="1">
+                            <el-row style="height: 100%; width: 100%;">
+                                <el-col :span="18" :offset="1" style="height: 100%; width: 100%;">
                                     <img :src="result_path_url" alt="展示结果失败" v-if="tabName === '两张图片'"
                                         style="max-height: 98%; max-width: 98%;" />
 
@@ -284,11 +285,32 @@
                                 </el-col>
 
 
-                                <el-col :span="4" :offset="1">
+                                <el-col :span="5">
                                     <div class="result-text">
                                         <el-text>
                                             总耗时: {{ formatTime(elapsedTime) }}
                                         </el-text>
+                                    </div>
+                                    <br />
+                                    <div class="result-button">
+                                        <el-button type="success" round @click="downloadImage">
+                                            <el-tooltip placement="top" class="box-item" effect="dark"
+                                                content="下载左侧展示内容">
+                                                可视化结果下载
+                                            </el-tooltip>
+                                        </el-button>
+                                        <el-button type="success" round @click="downloadMatches">
+                                            <el-tooltip placement="top" class="box-item" effect="dark"
+                                                content="包含匹配对与置信度">
+                                                Matches 下载
+                                            </el-tooltip>
+                                        </el-button>
+                                        <el-button type="success" round @click="downloadPose">
+                                            <el-tooltip placement="top" class="box-item" effect="dark"
+                                                content="包含本质矩阵、R、T及合法匹配对">
+                                                Poses 下载
+                                            </el-tooltip>
+                                        </el-button>
                                     </div>
                                 </el-col>
                             </el-row>
@@ -407,13 +429,17 @@ watchEffect(() => {
 
     if (tabName.value === '实时' || tabName.value === '视频') {
         form.skip = 30
+    } else {
+        form.skip = 1
     }
 })
 
 // 结果展示
 let resLoading = ref(false) // 是否显示加载动画
-let result_path = ref('') // 结果文件路径
+let result_path = ref('') // 结果图片路径
 let result_path_url = ref('') // 结果文件路径 url
+let result_matches_path = ref('') // 匹配结果路径
+let result_poses_path = ref('') // 位姿结果路径
 
 const isRunning = ref(false); // 是否正在计时
 const elapsedTime = ref(0); // 已耗时（以毫秒为单位）
@@ -478,6 +504,8 @@ const matchingPairs = async () => {
             if (response.code === 200) {
                 result_path.value = response.data.save_path
                 result_path_url.value = response.data.save_path_url
+                result_matches_path.value = response.data.save_matches_path
+                result_poses_path.value = response.data.save_poses_path
 
                 stepsActive.value = 2
 
@@ -537,6 +565,8 @@ const matchingIamgesAndVideo = async () => {
             if (response.code === 200) {
                 result_path.value = response.data.save_path
                 result_path_url.value = response.data.save_path_url
+                result_matches_path.value = response.data.save_matches_path
+                result_poses_path.value = response.data.save_poses_path
 
                 stepsActive.value = 2
 
@@ -571,6 +601,60 @@ const matching = async () => {
         matchingRealTime()
     }
 }
+
+// 下载
+async function downloadImage() {
+    let post_info = {
+        'dfilepath': result_path.value,
+        'type': 'image'
+    }
+    download(post_info)
+}
+async function downloadMatches() {
+    let post_info = {
+        'dfilepath': result_matches_path.value,
+        'type': 'numpy'
+    }
+    download(post_info)
+}
+async function downloadPose() {
+    let post_info = {
+        'dfilepath': result_poses_path.value,
+        'type': 'numpy'
+    }
+    download(post_info)
+}
+const download = async (post_info: any) => {
+    console.log(post_info);
+
+    await axios.post('http://127.0.0.1:5000/matching/download', post_info, {
+        responseType: 'blob'
+    }).then((response) => {
+        if (response.status != 200) {
+            ElNotification.error(
+                '下载失败状态码错误'
+            )
+        } else {
+            // 检查 Content-Disposition
+            const contentDisposition = response.headers['content-disposition'];
+            const filename = contentDisposition ? contentDisposition.split('filename=')[1].replace(/['"]/g, '') : 'None.npy';
+
+            // 创建一个隐藏的 a 标签用于下载
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            stepsActive.value = 3
+        }
+    }).catch((error) => {
+        ElNotification.error('下载失败:', error);
+    });
+}
+
 </script>
 
 <style scoped>
@@ -632,5 +716,20 @@ const matching = async () => {
     border-color: var(--el-border-color);
     border-width: 1px;
     border-style: dashed;
+}
+
+.result-text {
+    height: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.result-button {
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
 }
 </style>

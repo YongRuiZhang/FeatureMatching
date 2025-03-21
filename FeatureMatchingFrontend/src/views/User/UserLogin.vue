@@ -87,7 +87,6 @@ const handleLogin = async () => {
             }
         }).then(res => {
             let response: responseType = res.data
-            console.log(response);
 
             if (response.code != 200) {
                 ElNotification.error({

@@ -35,6 +35,7 @@ def init():
     RESFILENAME = ""
 
 
+# ---------- 上传 ----------
 @detection_api.post('/upload')
 def upload():
     init()
@@ -70,6 +71,7 @@ def upload():
         return res(code='500', msg='图片上传失败', data=str(e))
 
 
+# ---------- 检测 ----------
 @detection_api.post('/detect')
 def detect():
     try:
@@ -184,6 +186,7 @@ def detect():
         return res(code='500', msg='检测失败', data=str(e))
 
 
+# ---------- 下载 ----------
 @detection_api.post('/download')
 def download():
     try:

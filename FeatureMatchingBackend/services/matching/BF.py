@@ -15,7 +15,7 @@ import numpy as np
 from services.detection.ORB import detection_ORB
 from services.detection.SIFT import detection_SIFT
 from services.detection.SuperPoint import detection_SuperPoint
-from utils.matching_utils import (AverageTimer, VideoStreamer, process_resize)
+from utils.matching_utils import (AverageTimer, VideoStreamer, process_resize, scale_intrinsics, estimate_pose)
 
 
 def detection_BF(frame1, frame2, kptsMethod):
@@ -84,7 +84,7 @@ def draw_matching(frame1, frame2, kpts1, kpts2, matches, kptsMethod, small_text)
     return out
 
 
-def matching_BF_pair(path, img1_path, img2_path, kptsMethod, is_save=True, is_process=True, timer=None):
+def matching_BF_pair(path, img1_path, img2_path, kptsMethod, K, is_save=True, is_process=True, timer=None):
     bf = cv2.BFMatcher(cv2.NORM_L2, True)
 
     if timer is None:
@@ -94,11 +94,14 @@ def matching_BF_pair(path, img1_path, img2_path, kptsMethod, is_save=True, is_pr
         img2 = cv2.imread(img2_path, 0)
         w, h = img1.shape[1], img1.shape[0]
         w_new, h_new = process_resize(w, h, [640, 480])
+        scales = (float(w) / float(w_new), float(h) / float(h_new))
         img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
         img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        K_scale = scale_intrinsics(K, scales)
     else:
         img1 = img1_path
         img2 = img2_path
+        K_scale = K
     timer.update('process images')
 
     kpts1, kpts2, des1, des2 = detection_BF(img1, img2, kptsMethod)
@@ -108,20 +111,54 @@ def matching_BF_pair(path, img1_path, img2_path, kptsMethod, is_save=True, is_pr
     timer.update('matching')
 
     if is_save:
-        small_text = timer.print(small_text=[])
-        out = draw_matching(img1, img2, kpts1, kpts2, matches, kptsMethod, small_text)
-
         save_dir = os.path.join(path, 'res')
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, "BF_{}.png".format(kptsMethod))
+        save_matches_path = os.path.join(save_dir, "BF_{}_matches.npz".format(kptsMethod))
+        save_poses_path = os.path.join(save_dir, "BF_{}_pose.npz".format(kptsMethod))
+
+        _kpts1 = np.float32([kpts1[m.queryIdx].pt for m in matches]).reshape(-1, 2)
+        _kpts2 = np.float32([kpts2[m.trainIdx].pt for m in matches]).reshape(-1, 2)
+
+        out_matches = {
+            'kpts1': _kpts1,
+            'kpts2': _kpts2,
+            'des1': des1,
+            'des2': des2,
+            # 'matches': matches,
+        }
+
+        thresh = 1.
+        res, E = estimate_pose(_kpts1, _kpts2, K_scale, K_scale, thresh)
+        if res is not None:
+            R, t, inliers = res
+
+            out_poses = {
+                'E': E,
+                'R': R,
+                't': t,
+                'inliers': inliers,
+            }
+            np.savez(save_matches_path, matches=out_matches)
+            np.savez(save_poses_path, poses=out_poses)
+
+        small_text = timer.print(small_text=[
+            'R: {}'.format(R[0, :]),
+            '   {}'.format(R[1, :]),
+            '   {}'.format(R[2, :]),
+            't: {}'.format(str(t)),
+            'inliers: {}'.format(len(inliers)),
+        ])
+        out = draw_matching(img1, img2, kpts1, kpts2, matches, kptsMethod, small_text)
+
         cv2.imwrite(save_path, out)
 
-        return save_path
+        return save_path, save_matches_path, save_poses_path
     else:
         return kpts1, kpts2, des1, des2, matches
 
 
-def matching_BF_images(path, kptsMethod, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
+def matching_BF_images(path, kptsMethod, K, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000, resize=None, fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -139,10 +176,19 @@ def matching_BF_images(path, kptsMethod, fix=True, type='多张图片', image_gl
         vs = VideoStreamer(file_path, resize=resize,
                            skip=skip, image_glob=image_glob, max_length=max_length)
     frame, _ = vs.next_frame()
+    K_scale = scale_intrinsics(K, vs.scales)
     last_frame = frame
     last_image_id = 0
 
     matching_images = []
+    out_matches = []
+    out_poses = []
+
+    save_dir = os.path.join(path, 'res')
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, "BF_{}_viz.mp4".format(kptsMethod))
+    save_matches_path = os.path.join(save_dir, "BF_{}_matches.npz".format(kptsMethod))
+    save_poses_path = os.path.join(save_dir, "BF_{}_pose.npz".format(kptsMethod))
 
     timer = AverageTimer()
 
@@ -160,7 +206,37 @@ def matching_BF_images(path, kptsMethod, fix=True, type='多张图片', image_gl
         matches = matching_BF(bf, des1, des2)
         timer.update('matching')
 
-        small_text = timer.print(small_text=[])
+        _kpts1 = np.float32([kpts1[m.queryIdx].pt for m in matches]).reshape(-1, 2)
+        _kpts2 = np.float32([kpts2[m.trainIdx].pt for m in matches]).reshape(-1, 2)
+
+        out_match = {
+            'kpts1': _kpts1,
+            'kpts2': _kpts2,
+            'des1': des1,
+            'des2': des2
+        }
+        out_matches.append(out_match)
+
+        thresh = 1.
+        res, E = estimate_pose(_kpts1, _kpts2, K_scale, K_scale, thresh)
+        if res is not None:
+            R, t, inliers = res
+
+            out_pose = {
+                'E': E,
+                'R': R,
+                't': t,
+                'inliers': inliers,
+            }
+            out_poses.append(out_pose)
+
+        small_text = timer.print(small_text=[
+            'R: {}'.format(R[0, :]),
+            '   {}'.format(R[1, :]),
+            '   {}'.format(R[2, :]),
+            't: {}'.format(str(t)),
+            'inliers: {}'.format(len(inliers)),
+        ])
         out = draw_matching(last_frame, frame, kpts1, kpts2, matches, kptsMethod, small_text)
 
         matching_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
@@ -168,9 +244,8 @@ def matching_BF_images(path, kptsMethod, fix=True, type='多张图片', image_gl
         if not fix:
             last_frame = frame
 
-    save_dir = os.path.join(path, 'res')
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "BF_{}.mp4".format(kptsMethod))
+    np.savez(save_matches_path, matches=out_matches)
+    np.savez(save_poses_path, poses=out_poses)
     imageio.mimsave(save_path, matching_images, format="MP4", fps=fps)
 
-    return save_path
+    return save_path, save_matches_path, save_poses_path

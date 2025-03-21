@@ -182,7 +182,6 @@ const getInfo = async () => {
     await axios.get('http://127.0.0.1:5000/detection/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
-            console.log(response);
 
             if (response.code === 200) {
                 let records: detectionRecordType[] = []

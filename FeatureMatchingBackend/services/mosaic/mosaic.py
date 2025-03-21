@@ -30,11 +30,9 @@ def get_homo_BF_FLANN(kpts1, kpts2, matches, min_matches=8):
     else:
         return '特征点数量不够', False
 
+
 def get_homo_SuperGlue_LoFTR(mkpts1, mkpts2, min_matches=8):
     if len(mkpts1) >= min_matches:
-        # src_points = np.float32([kpts1[m.queryIdx].pt for m in matches]).reshape(-1, 2)
-        # dst_points = np.float32([kpts2[m.trainIdx].pt for m in matches]).reshape(-1, 2)
-        print(mkpts1[0], mkpts2[0])
         mkpts1 = mkpts1.astype(np.float32)
         mkpts2 = mkpts2.astype(np.float32)
         H, mask = cv2.findHomography(mkpts2, mkpts1, cv2.RANSAC, 4.0)
@@ -116,10 +114,11 @@ def mosaic_pair(path, img1, img2, cls, kptsMethod, matchMethod, scence, scale):
                                                              is_process=False, timer=timer)
         H, ret = get_homo_BF_FLANN(kpts1, kpts2, matches, min_matches=8)
     elif matchMethod == 'SuperGlue':
-        kpts1, kpts2, mkpts1, mkpts2 = matching_pair('', gray1, gray2, scence, is_save=False, is_process=False, timer=timer)
+        kpts1, kpts2, mkpts1, mkpts2 = matching_pair('', gray1, gray2, '',scence, is_save=False, is_process=False,
+                                                     timer=timer)
         H, ret = get_homo_SuperGlue_LoFTR(mkpts1, mkpts2, min_matches=8)
     elif matchMethod == 'LoFTR':
-        mkpts1, mkpts2 = withoutKpts_pair('', gray1, gray2, scence, is_save=False, is_process=False, timer=timer)
+        mkpts1, mkpts2 = withoutKpts_pair('', gray1, gray2, '', scence, is_save=False, is_process=False, timer=timer)
         H, ret = get_homo_SuperGlue_LoFTR(mkpts1, mkpts2, min_matches=8)
 
     print(H, ret)
@@ -155,7 +154,7 @@ def mosaic_pair(path, img1, img2, cls, kptsMethod, matchMethod, scence, scale):
         text.append('LoFTR')
     else:
         text.append('{}_{}'.format(matchMethod, kptsMethod))
-        text.append('kpts:{}:{}'.format(len(kpts1), len(kpts2)),)
+        text.append('kpts:{}:{}'.format(len(kpts1), len(kpts2)), )
     if matchMethod == 'FLANN' or matchMethod == 'BF':
         text.append('matches:{}'.format(len(matches)))
     elif matchMethod == 'SuperGlue':
