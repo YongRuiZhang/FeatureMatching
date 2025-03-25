@@ -194,7 +194,7 @@
                                 <el-form-item label="匹配算法:">
                                     <el-radio-group v-model="form.matchmethod">
                                         <el-radio-button label="LoFTR" value="LoFTR" v-if="form.class === '半稀疏'" />
-                                        <el-radio-button label="Efficient LoFTR" value="Efficient LoFTR"
+                                        <el-radio-button label="Efficient LoFTR" value="ELoFTR"
                                             v-if="form.class === '半稀疏'" />
                                         <el-radio-button label="DKM" value="DKM" v-if="form.class === '稠密'" />
                                         <el-radio-button label="SuperGlue" value="SuperGlue"
@@ -218,7 +218,19 @@
                                         <el-radio-button label="室外" value="室外" />
                                     </el-radio-group>
                                 </el-form-item>
-
+                                <el-form-item label="模型类型:" v-if="form.matchmethod === 'ELoFTR'">
+                                    <el-radio-group v-model="form.model_type">
+                                        <el-radio-button label="高精度" value="full" />
+                                        <el-radio-button label="高速度" value="opt" />
+                                    </el-radio-group>
+                                </el-form-item>
+                                <el-form-item label="模型精度:" v-if="form.matchmethod === 'ELoFTR'">
+                                    <el-radio-group v-model="form.precision">
+                                        <el-radio-button label="fp32" value="fp32" />
+                                        <el-radio-button label="fp16" value="fp16" />
+                                        <el-radio-button label="mp" value="mp" />
+                                    </el-radio-group>
+                                </el-form-item>
                                 <el-row style="height: 14px;">
                                     <el-col :offset="10">
                                         <el-text
@@ -406,16 +418,19 @@ let form = reactive({
     scene: '室内',
     fix: '首张作为基准',
     skip: 1,
+    model_type: 'full',
+    precision: 'fp32'
 })
 const showScene = () =>
     (form.class === '稀疏' && (form.matchmethod === 'LoFTR' || form.matchmethod === 'SuperGlue')) ||
-    (form.class === '半稀疏' && form.matchmethod === 'LoFTR' || form.matchmethod === 'Efficient LoFTR');
+    (form.class === '半稀疏' && form.matchmethod === 'LoFTR') ||
+    (form.class === '稠密' && form.matchmethod === 'DKM');
 
 watchEffect(() => {
     if (form.class === '稀疏' && form.matchmethod !== 'SuperGlue' && form.matchmethod !== 'BF' && form.matchmethod !== 'FLANN') {
         form.matchmethod = 'SuperGlue'
     }
-    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'Efficient LoFTR') {
+    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'ELoFTR') {
         form.matchmethod = 'LoFTR'
     }
     if (form.class === '稠密' && form.matchmethod !== 'DKM') {

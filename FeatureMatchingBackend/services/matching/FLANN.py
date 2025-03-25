@@ -198,7 +198,7 @@ def matching_FLANN_images(path, kptsMethod, K, fix=True, type='多张图片', im
     last_frame = frame
     last_image_id = 0
 
-    matching_images = []
+    result_images = []
     out_matches = []
     out_poses = []
 
@@ -257,12 +257,12 @@ def matching_FLANN_images(path, kptsMethod, K, fix=True, type='多张图片', im
         ])
         out = draw_matching(last_frame, frame, kpts1, kpts2, matches, kptsMethod, small_text)
 
-        matching_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+        result_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
         if not fix:
             last_frame = frame
 
     np.savez(save_matches_path, matches=out_matches)
     np.savez(save_poses_path, poses=out_poses)
-    imageio.mimsave(save_path, matching_images, format="MP4", fps=fps)
+    imageio.mimsave(save_path, result_images, format="MP4", fps=fps)
 
     return save_path, save_matches_path, save_poses_path

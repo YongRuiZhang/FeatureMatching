@@ -82,7 +82,9 @@ class AverageTimer:
         self.will_print[name] = True
         self.last_time = now
 
-    def print(self, text='Timer', small_text=[]):
+    def print(self, text='Timer', small_text=None):
+        if small_text is None:
+            small_text = []
         total = 0.  # 总时长
         print('[{}]'.format(text), end=' ')
         for key in self.times:
@@ -259,7 +261,9 @@ def process_resize(w, h, resize):
     return w_new, h_new
 
 
-def frame2tensor(frame, device):
+def frame2tensor(frame, device, half=False):
+    if half:
+        return torch.from_numpy(frame / 255.).float()[None, None].half().to(device)
     return torch.from_numpy(frame / 255.).float()[None, None].to(device)
 
 

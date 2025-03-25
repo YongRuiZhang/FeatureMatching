@@ -163,7 +163,7 @@ def withoutKpts_images(path, K, scene, fix=True, type='多张图片', image_glob
     last_frame = frame
     last_image_id = 0
 
-    matching_images = []
+    result_images = []
     out_matches = []
     out_poses = []
 
@@ -218,18 +218,18 @@ def withoutKpts_images(path, K, scene, fix=True, type='多张图片', image_glob
             '   {}'.format(R[2, :]),
             't: {}'.format(str(t)),
             'inliers: {}'.format(len(inliers)),
+            'matches_{:06}_{:06}'.format(stem0, stem1)
         ])
-        small_text.append('matches_{:06}_{:06}'.format(stem0, stem1))
         out = make_matching_plot_fast(
             last_frame, frame, mkpts0=mkpts0, mkpts1=mkpts1, color=color, text=text,
             path=None, show_keypoints=False, small_text=small_text, margin=0)
-        matching_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+        result_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
 
         if not fix:
             last_frame = frame
             last_frame_tensor = new_frame_tensor
 
-    imageio.mimsave(save_path, matching_images, format="MP4", fps=fps)
+    imageio.mimsave(save_path, result_images, format="MP4", fps=fps)
     np.savez(save_matches_path, out_matches)
     np.savez(save_poses_path, out_poses)
 

@@ -190,7 +190,7 @@ def matching_images(path, scene, K, fix=True, type='多张图片',
     last_frame = frame
     last_image_id = 0
 
-    matching_images = []
+    result_images = []
     out_matches = []
     out_poses = []
     timer = AverageTimer(newline=True)
@@ -258,13 +258,13 @@ def matching_images(path, scene, K, fix=True, type='多张图片',
         out = make_matching_plot_fast(
             last_frame, frame, mkpts0, mkpts1, color, text, kpts0, kpts1,
             path=None, show_keypoints=True, small_text=small_text)
-        matching_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+        result_images.append(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
 
         if not fix:
             last_frame = frame
             last_frame_tensor = frame_tensor
 
-    imageio.mimsave(save_path, matching_images, format="MP4", fps=fps)
+    imageio.mimsave(save_path, result_images, format="MP4", fps=fps)
     np.savez(save_pose_path, out_poses)
     np.savez(save_matches_path, out_matches)
 

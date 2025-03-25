@@ -16,11 +16,12 @@ from flask import Blueprint, request, Response, jsonify, after_this_request, sen
 from flask import current_app
 from werkzeug.utils import secure_filename
 
-from services.matching import LoFTR, SuperGlue, BF, FLANN
+from services.matching import LoFTR, SuperGlue, BF, FLANN, ELoFTR, DKM
 from utils.Res import res
 from utils.checkFileType import allowed_pic_file, allowed_video_file
 
 matching_api = Blueprint('matching_api', __name__)
+
 
 # ----------- 图片对 ------------
 # 上传
@@ -89,18 +90,32 @@ def matching_image():
             matchMethod = form['matchmethod']
             if matchMethod == 'SuperGlue':
                 scene = form['scene']
-                save_path, save_matches_path, save_poses_path = SuperGlue.matching_pair(path, leftpath, rightpath, K, scene)
+                save_path, save_matches_path, save_poses_path = SuperGlue.matching_pair(path, leftpath, rightpath, K,
+                                                                                        scene)
             elif matchMethod == 'LoFTR':
                 scene = form['scene']
             elif matchMethod == 'BF':
-                save_path, save_matches_path, save_poses_path = BF.matching_BF_pair(path, leftpath, rightpath, kptMethod, K)
+                save_path, save_matches_path, save_poses_path = BF.matching_BF_pair(path, leftpath, rightpath,
+                                                                                    kptMethod, K)
             elif matchMethod == 'FLANN':
-                save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_pair(path, leftpath, rightpath, kptMethod, K)
+                save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_pair(path, leftpath, rightpath,
+                                                                                          kptMethod, K)
         elif cls == '半稀疏':
             matchMethod = form['matchmethod']
             if matchMethod == 'LoFTR':
                 scene = form['scene']
-                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_pair(path, leftpath, rightpath, K, scene)
+                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_pair(path, leftpath, rightpath, K,
+                                                                                       scene)
+            # if matchMethod == 'ELoFTR':
+            #     save_path, save_matches_path, save_poses_path = ELoFTR.matching_pair(path, leftpath, rightpath, K,
+            #                                                                          model_type=form['model_type'],
+            #                                                                          precision=form['precision'])
+        elif cls == '稠密':
+            matchMethod = form['matchmethod']
+            if matchMethod == 'DKM':
+                scene = form['scene']
+                save_path, save_matches_path, save_poses_path = DKM.matching_pair(path, leftpath, rightpath, K,
+                                                                                        scene)
 
         save_path_url = save_path_url + os.path.basename(save_path)
         return res(200, msg='特征匹配成功', data={
@@ -217,6 +232,7 @@ def upload_video():
     except Exception as e:
         return res(code='500', msg='视频上传失败', data=str(e))
 
+
 # 匹配
 @matching_api.post('/images')
 def matching_images():
@@ -254,14 +270,23 @@ def matching_images():
             elif matchMethod == 'LoFTR':
                 scene = form['scene']
             elif matchMethod == 'BF':
-                save_path, save_matches_path, save_poses_path = BF.matching_BF_images(path, kptMethod, K, fix, type, skip=skip)
+                save_path, save_matches_path, save_poses_path = BF.matching_BF_images(path, kptMethod, K, fix, type,
+                                                                                      skip=skip)
             elif matchMethod == 'FLANN':
-                save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_images(path, kptMethod, K, fix, type, skip=skip)
+                save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_images(path, kptMethod, K, fix,
+                                                                                            type, skip=skip)
         elif cls == '半稀疏':
             matchMethod = form['matchmethod']
             if matchMethod == 'LoFTR':
                 scene = form['scene']
-                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_images(path, K, scene, fix, type, skip=skip)
+                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_images(path, K, scene, fix, type,
+                                                                                         skip=skip)
+        elif cls == '稠密':
+            matchMethod = form['matchmethod']
+            if matchMethod == 'DKM':
+                scene = form['scene']
+                save_path, save_matches_path, save_poses_path = DKM.matching_images(path, K, scene, fix, type,
+                                                                                    skip=skip)
 
         save_path_url = save_path_url + os.path.basename(save_path)
         return res(200, msg='特征匹配成功', data={
