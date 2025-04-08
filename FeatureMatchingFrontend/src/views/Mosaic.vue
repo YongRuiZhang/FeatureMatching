@@ -60,14 +60,16 @@
                                 </el-form-item>
                                 <el-form-item label="匹配算法:">
                                     <el-radio-group v-model="form.matchmethod">
-                                        <el-radio-button label="LoFTR" value="LoFTR" v-if="form.class === '半稀疏'" />
-                                        <el-radio-button label="Efficient LoFTR" value="Efficient LoFTR"
-                                            v-if="form.class === '半稀疏'" />
-                                        <el-radio-button label="DKM" value="DKM" v-if="form.class === '稠密'" />
                                         <el-radio-button label="SuperGlue" value="SuperGlue"
                                             v-if="form.class === '稀疏'" />
                                         <el-radio-button label="BF" value="BF" v-if="form.class === '稀疏'" />
                                         <el-radio-button label="FLANN" value="FLANN" v-if="form.class === '稀疏'" />
+
+                                        <el-radio-button label="LoFTR" value="LoFTR" v-if="form.class === '半稀疏'" />
+                                        <el-radio-button label="ASpanFormer" value="ASpanFormer"
+                                            v-if="form.class === '半稀疏'" />
+
+                                        <el-radio-button label="DKM" value="DKM" v-if="form.class === '稠密'" />
                                     </el-radio-group>
                                 </el-form-item>
                                 <el-form-item label="检测器算法:" v-if="form.class === '稀疏'">
@@ -138,6 +140,15 @@
                                             总耗时: {{ formatTime(elapsedTime) }}
                                         </el-text>
                                     </div>
+                                    <br>
+                                    <div class="result-button">
+                                        <el-button type="success" round @click="downloadImage">
+                                            <el-tooltip placement="top" class="box-item" effect="dark"
+                                                content="下载左侧展示内容">
+                                                可视化结果下载
+                                            </el-tooltip>
+                                        </el-button>
+                                    </div>
                                 </el-col>
                             </el-row>
                         </div>
@@ -158,7 +169,13 @@ import { ElMessage, ElNotification } from "element-plus"
 import UploadImagePair from '@/components/UploadImagePair.vue'
 import { useUploadImagePairStore } from "@/stores/UploadImagePairStore"
 import type { responseType } from "@/types"
+import { useRouter } from "vue-router"
+import { useUserStore } from "@/stores/UserStore"
+import { jwt_refresh } from "@/utils/JWT"
 
+const router = useRouter()
+const userStore = useUserStore()
+let { username, access_token } = userStore
 
 // 步骤条
 let stepsActive = ref(0)
@@ -178,13 +195,14 @@ let form = reactive({
 })
 const showScene = () =>
     (form.class === '稀疏' && (form.matchmethod === 'LoFTR' || form.matchmethod === 'SuperGlue')) ||
-    (form.class === '半稀疏' && form.matchmethod === 'LoFTR' || form.matchmethod === 'Efficient LoFTR');
+    (form.class === '半稀疏' && form.matchmethod === 'LoFTR' || form.matchmethod === 'ASpanFormer' || form.matchmethod === 'Efficient LoFTR') ||
+    (form.class === '稠密' && form.matchmethod === 'DKM');
 
 watchEffect(() => {
     if (form.class === '稀疏' && form.matchmethod !== 'SuperGlue' && form.matchmethod !== 'BF' && form.matchmethod !== 'FLANN') {
         form.matchmethod = 'SuperGlue'
     }
-    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'Efficient LoFTR') {
+    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'Efficient LoFTR' && form.matchmethod !== 'ASpanFormer') {
         form.matchmethod = 'LoFTR'
     }
     if (form.class === '稠密' && form.matchmethod !== 'DKM') {
@@ -203,6 +221,7 @@ watchEffect(() => {
 let resLoading = ref(false) // 是否显示加载动画
 let result_path = ref('') // 结果文件路径
 let result_path_url = ref('') // 结果文件路径 url
+let mosaicTime = ref('') // 拼接时间
 
 const isRunning = ref(false); // 是否正在计时
 const elapsedTime = ref(0); // 已耗时（以毫秒为单位）
@@ -268,8 +287,26 @@ const mosaic = async () => {
             if (response.code === 200) {
                 result_path.value = response.data.save_path
                 result_path_url.value = response.data.save_path_url
+                mosaicTime.value = response.data.mosaicTimes
 
                 stepsActive.value = 2
+
+                if (username != null && username != '' && username != '登陆') {
+                    let { leftpath_url, rightpath_url } = imagePairStore
+                    const postInfo = {
+                        'username': username,
+                        'path': path,
+                        'left_url': leftpath_url,
+                        'right_url': rightpath_url,
+                        'algorithm_type': form.class,
+                        'algorithm': form.class !== '稀疏' ? form.matchmethod : form.matchmethod + '_' + form.kptmethod,
+                        'scene': showScene() ? form.scene : '无此配置',
+                        'elapsed_time': mosaicTime.value,
+                        'save_path': result_path.value,
+                        'save_path_url': result_path_url.value,
+                    }
+                    addMosaicRecord(postInfo)
+                }
 
                 ElNotification.success({
                     title: '操作成功',
@@ -284,6 +321,68 @@ const mosaic = async () => {
         })
     pauseTimer()
     resLoading.value = false
+}
+
+// 下载
+const downloadImage = async () => {
+    let post_info = {
+        'dfilepath': result_path.value,
+        'type': 'image'
+    }
+    await axios.post('http://127.0.0.1:5000/mosaic/download', post_info, {
+        responseType: 'blob'
+    }).then((response) => {
+        if (response.status != 200) {
+            ElNotification.error(
+                '下载失败状态码错误'
+            )
+        } else {
+            // 检查 Content-Disposition
+            const contentDisposition = response.headers['content-disposition'];
+            const filename = contentDisposition ? contentDisposition.split('filename=')[1].replace(/['"]/g, '') : 'None.npy';
+
+            // 创建一个隐藏的 a 标签用于下载
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            stepsActive.value = 3
+        }
+    }).catch((error) => {
+        ElNotification.error('下载失败:', error);
+    });
+}
+
+const addMosaicRecord = async (postInfo: any) => {
+    const headers = {
+        Authorization: 'Bearer ' + access_token,
+    };
+
+    await axios.post('http://127.0.0.1:5000/mosaic/record', postInfo, { headers })
+        .then((res) => {
+            let response: responseType = res.data
+
+            if (response.code === 200) {
+
+                ElNotification.success({
+                    title: response.msg,
+                    message: response.data
+                })
+            }
+
+        }).catch((error) => {
+            if (error.response.status == 401 && error.response.data.msg == "Token has expired") {
+                ElNotification.error({
+                    title: '更新用户token中...',
+                    message: '太久未登陆, token 已过期, 稍后重试'
+                })
+                jwt_refresh(router)
+            }
+        })
 }
 </script>
 

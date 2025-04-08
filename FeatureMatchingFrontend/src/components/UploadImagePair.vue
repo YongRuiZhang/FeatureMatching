@@ -107,6 +107,7 @@ function leftUploadSuccess(response: any) {
         store.setPath(dir_path.value)
         store.setDirName(uid.value)
         store.setLeftPath(left.imagePath)
+        store.setLeftPathUrl(left.imagePath_url)
 
         ElNotification.success({
             title: '成功上传 左 图片',
@@ -138,6 +139,7 @@ function rightUploadSuccess(response: any) {
         store.setPath(dir_path.value)
         store.setDirName(uid.value)
         store.setRightPath(right.imagePath)
+        store.setRightPathUrl(right.imagePath_url)
 
         ElNotification.success({
             title: '成功上传 右 图片',

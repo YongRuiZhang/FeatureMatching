@@ -49,7 +49,7 @@ def matching_pair(path, img1_path, img2_path, K, scene,
         dkm_model = DKMv3_outdoor()
 
     if timer is None:
-        timer = AverageTimer(newline=True)
+        timer = AverageTimer()
 
     if is_process:
         img1 = cv2.imread(img1_path, 0)
@@ -121,7 +121,7 @@ def matching_pair(path, img1_path, img2_path, K, scene,
 
         return save_path, save_matches_path, save_pose_path
     else:
-        return '', '', kpts1, kpts2
+        return kpts1, kpts2
 
 
 def matching_images(path, K, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_num=10000, resize=None,

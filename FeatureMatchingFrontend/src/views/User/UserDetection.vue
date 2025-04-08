@@ -30,20 +30,22 @@
         <div class="table-container">
             <el-table :data="filterTableData" style="width: 100%"
                 :default-sort="{ prop: 'register_date', order: 'descending' }" @selection-change="handleSelectionChange"
-                height="820" :table-layout="'auto'">
-                <el-table-column type="selection" width="55" />
-                <el-table-column fixed prop="id" label="Record ID" width="90" show-overflow-tooltip />
+                height="820" :table-layout="'auto'" :header-cell-style="{ 'text-align': 'center' }">
+                <el-table-column type="selection" width="55" align="center" />
+                <el-table-column fixed prop="id" label="记录 ID" width="110" show-overflow-tooltip />
+                <el-table-column fixed prop="origin_image_name" label="源图像名" width="110" show-overflow-tooltip />
 
-                <el-table-column fixed prop="origin_image_name" label="Image" width="100" />
-                <el-table-column label="Origin Image" width="120">
+                <el-table-column label="源图像" width="130" align="center">
                     <template #default="scope">
                         <el-image :src="scope.row.origin_image_url" :preview-src-list="[scope.row.origin_image_url]"
-                            hide-on-click-modal preview-teleported></el-image>
+                            hide-on-click-modal preview-teleported style="aspect-ratio: 16 / 17;" />
                     </template>
                 </el-table-column>
-                <el-table-column prop="image_width" label="Width" width="80" />
-                <el-table-column prop="image_height" label="Height" width="80" />
-                <el-table-column prop="algorithm" label="Algorithm" width="140" :filters="[
+
+                <el-table-column prop="image_width" label="图像宽度" width="80" align="center" />
+                <el-table-column prop="image_height" label="图像高度" width="80" align="center" />
+
+                <el-table-column prop="algorithm" label="算法" width="150" align="center" :filters="[
                     { text: 'Harris', value: 'Harris' },
                     { text: 'Shi-Tomasi', value: 'Shi-Tomasi' },
                     { text: 'ORB', value: 'ORB' },
@@ -55,39 +57,44 @@
                             scope.row.algorithm }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="config" label="Config" width="240" />
-                <el-table-column label="Result Image" width="120">
+
+                <el-table-column prop="config" label="配置参数" width="220" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.res_image_url" :preview-src-list="[scope.row.res_image_url]"
-                            hide-on-click-modal preview-teleported></el-image>
+                        <p v-for="c in scope.row.config">{{ c }}</p>
                     </template>
                 </el-table-column>
-                <el-table-column prop="res_kpts_num" label="Kpts Num" width="100" />
-                <el-table-column prop="elapsed_time" label="Elapsed Time(ms)" width="160" />
-                <el-table-column prop="detection_date" label="Detection Date" width="180" />
+                <el-table-column label="结果图像" width="130" align="center">
+                    <template #default="scope">
+                        <el-image :src="scope.row.res_image_url" :preview-src-list="[scope.row.res_image_url]"
+                            hide-on-click-modal preview-teleported style="aspect-ratio: 16 / 17;" />
+                    </template>
+                </el-table-column>
+                <el-table-column prop="res_kpts_num" label="Kpts 个数" width="100" align="center" />
+                <el-table-column prop="elapsed_time" label="耗时(ms)" width="160" align="center" />
+                <el-table-column prop="detection_date" label="检测日期" width="180" align="center" />
 
-                <el-table-column fixed="right" label="Operations" width="140">
+                <el-table-column fixed="right" label="操作" width="140" align="left">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="deleteSomeOne(scope.row)">
-                            Delete
+                            删除
                         </el-button>
                         <br />
                         <el-button link type="primary" size="small" @click="downLoadKpts(scope.row)">
-                            DownLoad Kpts
+                            下载 Kpts
                         </el-button>
                         <br v-if="scope.row.res_scores_path != null && scope.row.res_scores_path != ''" />
                         <el-button link type="primary" size="small" @click="downLoadScores(scope.row)"
                             v-if="scope.row.res_scores_path != null && scope.row.res_scores_path != ''">
-                            DownLoad Scores
+                            下载 Scores
                         </el-button>
                         <br v-if="scope.row.res_descriptors_path != null && scope.row.res_descriptors_path != ''" />
                         <el-button link type="primary" size="small" @click="downLoadDescriptors(scope.row)"
                             v-if="scope.row.res_descriptors_path != null && scope.row.res_descriptors_path != ''">
-                            DownLoad Descriptors
+                            下载 Descriptors
                         </el-button>
                         <br />
                         <el-button link type="primary" size="small" @click="downLoadResImage(scope.row)">
-                            DownLoad ResImg
+                            下载可视化结果
                         </el-button>
                     </template>
                 </el-table-column>
@@ -110,7 +117,6 @@ import { jwt_refresh } from "@/utils/JWT"
 import { useRouter } from 'vue-router'
 import { storeToRefs } from "pinia"
 import axios from "axios"
-import { de } from "element-plus/es/locales.mjs"
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -143,6 +149,23 @@ const algorithmType = (algorithm: string) => {
             return 'warning'
     }
 }
+let { username, gender, role } = userStore
+onMounted(async () => {
+    if (username == '登陆' || gender == '' || role == '') {
+        ElNotification.error({
+            title: '未登陆！',
+            message: '请先登陆'
+        })
+        router.push('/login')
+    } else {
+        try {
+            getTotal()
+            getInfo()
+        } catch (error) {
+            console.error('请求失败:', error)
+        }
+    }
+})
 
 // 查
 const getTotal = async () => {
@@ -186,13 +209,22 @@ const getInfo = async () => {
             if (response.code === 200) {
                 let records: detectionRecordType[] = []
                 response.data.forEach((record: detectionRecordType) => {
+                    let config = []
+                    if (record.config == '{}') {
+                        config.push('无参数')
+                    } else {
+                        let c = JSON.parse(record.config as string)
+                        Object.keys(c).forEach(key => {
+                            config.push(`${key}: ${c[key]}`)
+                        });
+                    }
                     records.push({
                         'id': record.id,
                         'user_id': record.user_id,
                         'origin_image_name': record.origin_image_name,
                         'origin_image_url': record.origin_image_url,
                         'algorithm': record.algorithm,
-                        'config': record.config == '{}' ? '无参数' : record.config,
+                        'config': config,
                         'image_width': record.image_width,
                         'image_height': record.image_height,
                         'elapsed_time': Number(record.elapsed_time) / 1000,
@@ -226,14 +258,7 @@ const getInfo = async () => {
             }
         })
 }
-onMounted(async () => {
-    try {
-        getTotal()
-        getInfo()
-    } catch (error) {
-        console.error('请求失败:', error)
-    }
-})
+
 const handleSizeChange = async (newPageSize: number) => {
     await axios.get('http://127.0.0.1:5000/detection/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
         .then((res) => {
@@ -241,13 +266,22 @@ const handleSizeChange = async (newPageSize: number) => {
             if (response.code === 200) {
                 let records: detectionRecordType[] = []
                 response.data.forEach((record: detectionRecordType) => {
+                    let config = []
+                    if (record.config == '{}') {
+                        config.push('无参数')
+                    } else {
+                        let c = JSON.parse(record.config as string)
+                        Object.keys(c).forEach(key => {
+                            config.push(`${key}: ${c[key]}`)
+                        });
+                    }
                     records.push({
                         'id': record.id,
                         'user_id': record.user_id,
                         'origin_image_name': record.origin_image_name,
                         'origin_image_url': record.origin_image_url,
                         'algorithm': record.algorithm,
-                        'config': record.config == '{}' ? '无参数' : record.config,
+                        'config': config,
                         'image_width': record.image_width,
                         'image_height': record.image_height,
                         'elapsed_time': Number(record.elapsed_time) / 1000,
@@ -294,13 +328,22 @@ const handleCurrentChange = async (newPage: number) => {
             if (response.code === 200) {
                 let records: detectionRecordType[] = []
                 response.data.forEach((record: detectionRecordType) => {
+                    let config = []
+                    if (record.config == '{}') {
+                        config.push('无参数')
+                    } else {
+                        let c = JSON.parse(record.config as string)
+                        Object.keys(c).forEach(key => {
+                            config.push(`${key}: ${c[key]}`)
+                        });
+                    }
                     records.push({
                         'id': record.id,
                         'user_id': record.user_id,
                         'origin_image_name': record.origin_image_name,
                         'origin_image_url': record.origin_image_url,
                         'algorithm': record.algorithm,
-                        'config': record.config == '{}' ? '无参数' : record.config,
+                        'config': config,
                         'image_width': record.image_width,
                         'image_height': record.image_height,
                         'elapsed_time': Number(record.elapsed_time) / 1000,

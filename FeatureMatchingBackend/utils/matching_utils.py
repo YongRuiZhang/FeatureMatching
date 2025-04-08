@@ -157,11 +157,8 @@ class VideoStreamer:
             self.cap = cv2.VideoCapture(basedir)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             num_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            print(num_frames)
             self.listing = range(0, num_frames)
-            print(self.listing, self.skip)
             self.listing = self.listing[::self.skip]
-            print(self.listing)
             self.video_file = True
             self.max_length = np.min([self.max_length, len(self.listing)])
             self.listing = self.listing[:self.max_length]
@@ -298,18 +295,15 @@ def estimate_pose(kpts0, kpts1, K0, K1, thresh, conf=0.99999):
     # 匹配对大于等于 5
     if len(kpts0) < 5:
         return None, ''
-    print(2.1)
 
     # 焦距归一化：求 a_x, a_y, b_x, b_y（两个相机x，y方向上的焦距）
     f_mean = np.mean([K0[0, 0], K1[1, 1], K0[0, 0], K1[1, 1]])
     # 将 像素误差 转换为与 相机内参无关 的 几何误差
     norm_thresh = thresh / f_mean
-    print(2.2)
 
     # 将 像素平面 的坐标点转换到 摄像机坐标系
     kpts0 = (kpts0 - K0[[0, 1], [2, 2]][None]) / K0[[0, 1], [0, 1]][None]  # (x0, y0) = ((x0'-c0_x)/a0, (y0'-c0_y)/b0)
     kpts1 = (kpts1 - K1[[0, 1], [2, 2]][None]) / K1[[0, 1], [0, 1]][None]  # (x1, y1) = ((x1'-c1_x)/a1, (y1'-c1_y)/b1)
-    print(2.3)
 
     # 求本质矩阵，E 为本质矩阵，mask为0，1矩阵（0表示异常值（外点），1表示内点）
     E, mask = cv2.findEssentialMat(

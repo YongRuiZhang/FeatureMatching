@@ -113,7 +113,7 @@ def matching_BF_pair(path, img1_path, img2_path, kptsMethod, K, is_save=True, is
     if is_save:
         save_dir = os.path.join(path, 'res')
         os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, "BF_{}.png".format(kptsMethod))
+        save_path = os.path.join(save_dir, "BF_{}_viz.png".format(kptsMethod))
         save_matches_path = os.path.join(save_dir, "BF_{}_matches.npz".format(kptsMethod))
         save_poses_path = os.path.join(save_dir, "BF_{}_pose.npz".format(kptsMethod))
 

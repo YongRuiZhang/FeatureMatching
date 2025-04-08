@@ -241,7 +241,8 @@ def download_id(id, type):
         return res(code='500', msg='下载失败', data=str(e))
 
 
-# 记录 增
+# ============ 记录
+# 增
 @detection_api.post('/record')
 @jwt_required()
 def add_record():

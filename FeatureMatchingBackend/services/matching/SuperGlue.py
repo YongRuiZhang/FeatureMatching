@@ -97,9 +97,9 @@ def matching_pair(path, img1_path, img2_path, K,
 
         save_dir = os.path.join(path, 'res')
         os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}_viz.png".format(scene))
-        save_matches_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}_matches.npz".format(scene))
-        save_pose_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}_pose.npz".format(scene))
+        save_path = os.path.join(save_dir, "SuperGlue_SuperPoint_{}_viz.png".format(scene))
+        save_matches_path = os.path.join(save_dir, "SuperGlue_SuperPoint_{}_matches.npz".format(scene))
+        save_pose_path = os.path.join(save_dir, "SuperGlue_SuperPoint_{}_pose.npz".format(scene))
         if ret is not None:
             np.savez(save_matches_path, **out_matches)
             np.savez(save_pose_path, **out_poses)
@@ -168,9 +168,9 @@ def matching_images(path, scene, K, fix=True, type='多张图片',
 
     save_dir = os.path.join(path, 'res')
     os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}_viz.mp4".format(scene))
-    save_matches_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}_matches.npz".format(scene))
-    save_pose_path = os.path.join(save_dir, "SuperPoint_SuperGlue_{}_pose.npz".format(scene))
+    save_path = os.path.join(save_dir, "SuperGlue_SuperPoint_{}_viz.mp4".format(scene))
+    save_matches_path = os.path.join(save_dir, "SuperGlue_SuperPoint_{}_matches.npz".format(scene))
+    save_pose_path = os.path.join(save_dir, "SuperGlue_SuperPoint_{}_pose.npz".format(scene))
 
     if type == '多张图片':
         vs = VideoStreamer(path, resize=resize,

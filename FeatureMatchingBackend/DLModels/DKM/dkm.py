@@ -104,7 +104,6 @@ class ConvRefiner(nn.Module):
             in_displacement = flow - query_coords
             emb_in_displacement = self.disp_emb(in_displacement)
             if self.local_corr_radius:
-                # TODO: should corr have gradient?
                 if self.corr_in_other:
                     # Corr in other means take a kxk grid around the predicted coordinate in other image
                     local_corr = local_correlation(x, y, local_radius=self.local_corr_radius, flow=flow)

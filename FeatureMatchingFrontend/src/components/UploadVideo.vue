@@ -17,8 +17,13 @@
                 </div>
 
                 <template #tip>
-                    <div class="el-upload__tip" style="margin-left: 1%;">
-                        仅支持上传 jpg/jpeg/png , 大小 <= 15000 kb </div>
+                    <div class="el-upload__tip" style="margin-left: 1%;" v-if="filepath === ''">
+                        仅支持上传 mp4/mov , 大小 <= 150000 kb </div>
+                            <div class="el-upload__tip" style="margin-left: 1%; color: var(--el-text-color-primary);"
+                                v-if="filepath !== ''">
+                                已成功上传视频，请删除后再上传其他视频
+                            </div>
+
                 </template>
             </el-upload>
         </el-col>
@@ -47,10 +52,13 @@ const uploadSuccess = (response: any) => {
             message: '失败原因: ' + response.data,
         })
     } else {
-        filepath.value = response.data.file_path
-        filepath_url.value = response.data.file_path_url
+        filepath.value = response.data.filepath
+        filepath_url.value = response.data.filepath_url
         uid.value = response.data.uid
         dir_path.value = response.data.dir_path
+
+        console.log(filepath.value, filepath_url.value);
+
 
         store.setPath(dir_path.value)
         store.setDirName(uid.value)

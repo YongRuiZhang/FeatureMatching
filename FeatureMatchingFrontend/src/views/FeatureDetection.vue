@@ -307,9 +307,6 @@ async function detection() {
             scores_path.value = response.data.scores_path === '' ? '' : response.data.scores_path
             descriptors_path.value = response.data.descriptors_path === '' ? '' : response.data.descriptors_path
 
-            console.log(response.data);
-
-
             if (resImagePath.value !== "" && resImagePath_url.value !== "") {
                 haveResPic.value = true
             }
@@ -410,8 +407,6 @@ async function downloadDes() {
     download(post_info)
 }
 const download = async (post_info: any) => {
-    console.log(post_info);
-
     await axios.post('http://127.0.0.1:5000/detection/download', post_info, {
         responseType: 'blob'
     }).then((response) => {

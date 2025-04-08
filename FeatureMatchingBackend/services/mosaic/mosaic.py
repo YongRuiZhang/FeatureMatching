@@ -14,10 +14,7 @@ import numpy as np
 from services.detection.ORB import detection_ORB
 from services.detection.SIFT import detection_SIFT
 from services.detection.SuperPoint import detection_SuperPoint
-from services.matching.BF import matching_BF_pair
-from services.matching.FLANN import matching_FLANN_pair
-from services.matching.LoFTR import withoutKpts_pair
-from services.matching.SuperGlue import matching_pair
+from services.matching import BF, FLANN, SuperGlue, LoFTR, ASpanFormer, DKM
 from utils.matching_utils import process_resize, AverageTimer
 
 
@@ -31,7 +28,7 @@ def get_homo_BF_FLANN(kpts1, kpts2, matches, min_matches=8):
         return '特征点数量不够', False
 
 
-def get_homo_SuperGlue_LoFTR(mkpts1, mkpts2, min_matches=8):
+def get_homo_mkpts(mkpts1, mkpts2, min_matches=8):
     if len(mkpts1) >= min_matches:
         mkpts1 = mkpts1.astype(np.float32)
         mkpts2 = mkpts2.astype(np.float32)
@@ -106,22 +103,29 @@ def mosaic_pair(path, img1, img2, cls, kptsMethod, matchMethod, scence, scale):
     timer.update('process images')
 
     if matchMethod == 'FLANN':
-        kpts1, kpts2, des1, des2, matches = matching_FLANN_pair('', gray1, gray2, kptsMethod, is_save=False,
-                                                                is_process=False, timer=timer)
+        kpts1, kpts2, des1, des2, matches = FLANN.matching_FLANN_pair('', gray1, gray2, kptsMethod, '', is_save=False,
+                                                                      is_process=False, timer=timer)
         H, ret = get_homo_BF_FLANN(kpts1, kpts2, matches, min_matches=8)
     elif matchMethod == 'BF':
-        kpts1, kpts2, des1, des2, matches = matching_BF_pair('', gray1, gray2, kptsMethod, is_save=False,
-                                                             is_process=False, timer=timer)
+        kpts1, kpts2, des1, des2, matches = BF.matching_BF_pair('', gray1, gray2, kptsMethod, '', is_save=False,
+                                                                is_process=False, timer=timer)
         H, ret = get_homo_BF_FLANN(kpts1, kpts2, matches, min_matches=8)
     elif matchMethod == 'SuperGlue':
-        kpts1, kpts2, mkpts1, mkpts2 = matching_pair('', gray1, gray2, '',scence, is_save=False, is_process=False,
-                                                     timer=timer)
-        H, ret = get_homo_SuperGlue_LoFTR(mkpts1, mkpts2, min_matches=8)
+        kpts1, kpts2, mkpts1, mkpts2 = SuperGlue.matching_pair('', gray1, gray2, '', scence, is_save=False,
+                                                               is_process=False,
+                                                               timer=timer)
+        H, ret = get_homo_mkpts(mkpts1, mkpts2, min_matches=8)
     elif matchMethod == 'LoFTR':
-        mkpts1, mkpts2 = withoutKpts_pair('', gray1, gray2, '', scence, is_save=False, is_process=False, timer=timer)
-        H, ret = get_homo_SuperGlue_LoFTR(mkpts1, mkpts2, min_matches=8)
-
-    print(H, ret)
+        mkpts1, mkpts2 = LoFTR.withoutKpts_pair('', gray1, gray2, '', scence, is_save=False, is_process=False,
+                                                timer=timer)
+        H, ret = get_homo_mkpts(mkpts1, mkpts2, min_matches=8)
+    elif matchMethod == 'ASpanFormer':
+        mkpts1, mkpts2 = ASpanFormer.matching_pair('', gray1, gray2, '', scence, is_save=False, is_process=False,
+                                                   timer=timer)
+        H, ret = get_homo_mkpts(mkpts1, mkpts2, min_matches=8)
+    elif matchMethod == 'DKM':
+        mkpts1, mkpts2 = DKM.matching_pair('', gray1, gray2, '', scence, is_save=False, is_process=False, timer=timer)
+        H, ret = get_homo_mkpts(mkpts1, mkpts2, min_matches=8)
 
     if not ret:
         return '', False
@@ -152,6 +156,10 @@ def mosaic_pair(path, img1, img2, cls, kptsMethod, matchMethod, scence, scale):
     text = []
     if matchMethod == 'LoFTR':
         text.append('LoFTR')
+    elif matchMethod == 'ASpanFormer':
+        text.append('ASpanFormer')
+    elif matchMethod == 'DKM':
+        text.append('DKM')
     else:
         text.append('{}_{}'.format(matchMethod, kptsMethod))
         text.append('kpts:{}:{}'.format(len(kpts1), len(kpts2)), )
@@ -177,7 +185,12 @@ def mosaic_pair(path, img1, img2, cls, kptsMethod, matchMethod, scence, scale):
 
     save_dir = os.path.join(path, 'res')
     os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "{}_{}.png".format(matchMethod, kptsMethod))
+    if matchMethod == 'SuperGlue':
+        save_path = os.path.join(save_dir, "{}_{}_{}.png".format(matchMethod, kptsMethod, scence))
+    elif matchMethod == 'BF' or matchMethod == 'FLANN':
+        save_path = os.path.join(save_dir, "{}_{}.png".format(matchMethod, kptsMethod))
+    else:
+        save_path = os.path.join(save_dir, "{}_{}.png".format(matchMethod, scence))
     cv2.imwrite(save_path, out)
 
     return save_path, True

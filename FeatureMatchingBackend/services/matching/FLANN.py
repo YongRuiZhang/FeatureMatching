@@ -204,7 +204,7 @@ def matching_FLANN_images(path, kptsMethod, K, fix=True, type='多张图片', im
 
     save_dir = os.path.join(path, 'res')
     os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "FLANN_{}.mp4".format(kptsMethod))
+    save_path = os.path.join(save_dir, "FLANN_{}_viz.mp4".format(kptsMethod))
     save_matches_path = os.path.join(save_dir, "FLANN_{}_matches.npz".format(kptsMethod))
     save_poses_path = os.path.join(save_dir, "FLANN_{}_pose.npz".format(kptsMethod))
 

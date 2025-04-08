@@ -13,8 +13,9 @@ import pytz
 from flask import Blueprint, request
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, \
     get_jwt_header
+from sqlalchemy import func
 
-from models import User, db
+from models import User, Detection, Matching, Mosaic,db
 from utils.Res import res
 from utils.role_required import role_required
 
@@ -274,3 +275,75 @@ def get_users_total():
             return res(200, '查询成功', data=users_num)
     except Exception as e:
         return res(500, '查询失败', data=str(e))
+
+
+@user_api.get('/charts/<string:user_id>')
+@jwt_required()
+def get_charts(user_id):
+    try:
+        print(user_id)
+        result_detection = db.session.query(
+            Detection.algorithm,
+            func.count(Detection.algorithm).label('count')
+        ).join(User).filter(User.id == user_id).group_by(Detection.algorithm).all()
+
+        data_detection = [
+            {
+                "name": item.algorithm,
+                "value": item.count
+            }
+            for item in result_detection
+        ]
+        result_matching = (db.session.query(
+            Matching.algorithm,
+            func.count(Matching.algorithm).label('count')
+        ).join(User).filter(User.id == user_id)
+                           .group_by(Matching.algorithm).all())
+
+        data_matching = [
+            {
+                "name": item.algorithm,
+                "value": item.count
+            }
+            for item in result_matching
+        ]
+        result_mosaic = db.session.query(
+            Mosaic.algorithm,
+            func.count(Mosaic.algorithm).label('count')
+        ).join(User).filter(User.id == user_id).group_by(Mosaic.algorithm).all()
+
+        data_mosaic = [
+            {
+                "name": item.algorithm,
+                "value": item.count
+            }
+            for item in result_mosaic
+        ]
+
+        detection_count = Detection.query.join(User).filter(User.id == user_id).count()
+        matching_count = Matching.query.join(User).filter(User.id == user_id).count()
+        mosaic_count = Mosaic.query.join(User).filter(User.id == user_id).count()
+
+        data_pie = [
+            {
+                "name": '特征检测',
+                "value": detection_count
+            },
+            {
+                "name": '特征匹配',
+                "value": matching_count
+            },
+            {
+                "name": '图像匹配',
+                "value": mosaic_count
+            }
+        ]
+
+        return res(200, '查询成功', data={
+                'data_detection': data_detection,
+                'data_matching': data_matching,
+                'data_mosaic': data_mosaic,
+                'data_pie': data_pie,
+            })
+    except Exception as e:
+        res(500, '查询失败', data=str(e))

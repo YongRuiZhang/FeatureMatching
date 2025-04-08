@@ -1,13 +1,12 @@
 """
 -*-  coding: utf-8  -*-
 Author     : YongRuiZhang
-Date       : 2025/3/6 20:35
+Date       : 2025/3/25 19:09
 Project    : FeatureMatchingBackend
-FilePath   : services/matching/LoFTR.py
-Description: LoFTR 相关业务实现
+FilePath   : services/matching/ASpanFormer.py
+Description:
 """
 import os
-from copy import deepcopy
 
 import cv2
 import imageio
@@ -15,25 +14,35 @@ import numpy as np
 import torch
 from matplotlib import cm
 
-from DLModels.LoFTR import LoFTR
-from DLModels.LoFTR.utils.cvpr_ds_config import default_cfg
+from DLModels.ASpanFormer.aspanformer import ASpanFormer
+from DLModels.ASpanFormer.config.default import get_cfg_defaults
+from DLModels.ASpanFormer.utils.misc import lower_config
+
 from utils.matching_utils import (AverageTimer, VideoStreamer,
                                   frame2tensor, make_matching_plot_fast, process_resize, estimate_pose,
                                   scale_intrinsics)
 
 
-def withoutKpts_pair(path, img1_path, img2_path, K, scene, is_save=True, is_process=True, timer=None):
+def matching_pair(path, img1_path, img2_path, K, scene, is_save=True, is_process=True, timer=None):
     device = 'cpu'
 
     if scene == '室内':
-        _default_cfg = deepcopy(default_cfg)
-        _default_cfg['coarse']['temp_bug_fix'] = True
-        matcher = LoFTR(config=_default_cfg)
-        matcher.load_state_dict(torch.load("weights/LoFTR/indoor_ds_new.ckpt")['state_dict'])
+        scene = 'indoor'
+        config = get_cfg_defaults()
+        config.merge_from_file('DLModels/AspanFormer/configs/aspan/indoor/aspan_test.py')
+        _config = lower_config(config)
+        matcher = ASpanFormer(config=_config['aspan'])
+        state_dict = torch.load('weights/ASpanFormer/indoor.ckpt', map_location='cpu')['state_dict']
+        matcher.load_state_dict(state_dict, strict=False)
         matcher = matcher.eval()
     elif scene == '室外':
-        matcher = LoFTR(config=default_cfg)
-        matcher.load_state_dict(torch.load("weights/LoFTR/outdoor_ds.ckpt")['state_dict'])
+        scene = 'outdoor'
+        config = get_cfg_defaults()
+        config.merge_from_file('DLModels/AspanFormer/configs/aspan/outdoor/aspan_test.py')
+        _config = lower_config(config)
+        matcher = ASpanFormer(config=_config['aspan'])
+        state_dict = torch.load('weights/ASpanFormer/outdoor.ckpt', map_location='cpu')['state_dict']
+        matcher.load_state_dict(state_dict, strict=False)
         matcher = matcher.eval()
 
     if timer is None:
@@ -44,7 +53,7 @@ def withoutKpts_pair(path, img1_path, img2_path, K, scene, is_save=True, is_proc
         img2 = cv2.imread(img2_path, 0)
         w, h = img1.shape[1], img1.shape[0]
         w_new, h_new = process_resize(w, h, [640, 480])
-        scales = (float(w)/float(w_new), float(h)/float(h_new))
+        scales = (float(w) / float(w_new), float(h) / float(h_new))
         img1 = cv2.resize(img1, (w_new, h_new), interpolation=cv2.INTER_AREA)
         img2 = cv2.resize(img2, (w_new, h_new), interpolation=cv2.INTER_AREA)
         K_scale = scale_intrinsics(K, scales)
@@ -85,9 +94,9 @@ def withoutKpts_pair(path, img1_path, img2_path, K, scene, is_save=True, is_proc
 
         save_dir = os.path.join(path, 'res')
         os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, "LoFTR_{}_viz.png".format(scene))
-        save_matches_path = os.path.join(save_dir, "LoFTR_{}_matches.npz".format(scene))
-        save_poses_path = os.path.join(save_dir, "LoFTR_{}_pose.npz".format(scene))
+        save_path = os.path.join(save_dir, "ASpanFormer_{}_viz.png".format(scene))
+        save_matches_path = os.path.join(save_dir, "ASpanFormer_{}_matches.npz".format(scene))
+        save_poses_path = os.path.join(save_dir, "ASpanFormer_{}_pose.npz".format(scene))
 
         if res is not None:
             np.savez(save_matches_path, matches=out_matches)
@@ -95,7 +104,7 @@ def withoutKpts_pair(path, img1_path, img2_path, K, scene, is_save=True, is_proc
 
         color = cm.jet(mconf)
         text = [
-            'LoFTR',
+            'ASpanFormer',
             'Matches: {}'.format(len(mkpts0)),
         ]
         small_text = timer.print(small_text=[
@@ -119,9 +128,9 @@ def withoutKpts_pair(path, img1_path, img2_path, K, scene, is_save=True, is_proc
         return mkpts0, mkpts1
 
 
-def withoutKpts_images(path, K, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000,
-                       resize=None,
-                       fps=1):
+def matching_images(path, K, scene, fix=True, type='多张图片', image_glob=None, skip=1, max_length=1000000,
+                    resize=None,
+                    fps=1):
     if image_glob is None:
         image_glob = ['*.png', '*.jpg', '*.jpeg']
     if resize is None:
@@ -131,22 +140,31 @@ def withoutKpts_images(path, K, scene, fix=True, type='多张图片', image_glob
 
     if scene == '室内':
         scene = 'indoor'
-        _default_cfg = deepcopy(default_cfg)
-        _default_cfg['coarse']['temp_bug_fix'] = True
-        matcher = LoFTR(config=_default_cfg)
-        matcher.load_state_dict(torch.load("weights/LoFTR/indoor_ds_new.ckpt")['state_dict'])
+        config = get_cfg_defaults()
+        config.merge_from_file('DLModels/AspanFormer/configs/aspan/indoor/aspan_test.py')
+        _config = lower_config(config)
+        matcher = ASpanFormer(config=_config['aspan'])
+        state_dict = torch.load('weights/ASpanFormer/indoor.ckpt', map_location='cpu')['state_dict']
+        matcher.load_state_dict(state_dict, strict=False)
         matcher = matcher.eval()
     elif scene == '室外':
         scene = 'outdoor'
-        matcher = LoFTR(config=default_cfg)
-        matcher.load_state_dict(torch.load("weights/LoFTR/outdoor_ds.ckpt")['state_dict'])
+        config = get_cfg_defaults()
+        config.merge_from_file('DLModels/AspanFormer/configs/aspan/outdoor/aspan_test.py')
+        _config = lower_config(config)
+        matcher = ASpanFormer(config=_config['aspan'])
+        state_dict = torch.load('weights/ASpanFormer/outdoor.ckpt', map_location='cpu')['state_dict']
+        matcher.load_state_dict(state_dict, strict=False)
         matcher = matcher.eval()
 
+    result_images = []
+    out_matches = []
+    out_poses = []
     save_dir = os.path.join(path, 'res')
     os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, "LoFTR_{}_viz.mp4".format(scene))
-    save_matches_path = os.path.join(save_dir, "LoFTR_{}_matches.npz".format(scene))
-    save_poses_path = os.path.join(save_dir, "LoFTR_{}_pose.npz".format(scene))
+    save_path = os.path.join(save_dir, "ASpanFormer_{}_viz.mp4".format(scene))
+    save_matches_path = os.path.join(save_dir, "ASpanFormer_{}_matches.npz".format(scene))
+    save_poses_path = os.path.join(save_dir, "ASpanFormer_{}_pose.npz".format(scene))
 
     if type == '多张图片':
         vs = VideoStreamer(path, resize=resize,
@@ -163,10 +181,6 @@ def withoutKpts_images(path, K, scene, fix=True, type='多张图片', image_glob
     last_frame_tensor = frame2tensor(frame, device)
     last_frame = frame
     last_image_id = 0
-
-    result_images = []
-    out_matches = []
-    out_poses = []
 
     timer = AverageTimer()
 
@@ -210,7 +224,7 @@ def withoutKpts_images(path, K, scene, fix=True, type='多张图片', image_glob
 
         color = cm.jet(mconf)
         text = [
-            'LoFTR',
+            'ASpanFormer',
             'Matches: {}'.format(len(mkpts0)),
         ]
         small_text = timer.print(small_text=[

@@ -33,125 +33,12 @@
                             <UploadVideo ref="video" :setStepsActive1="setStepsActive1"
                                 :setStepsActive0="setStepsActive0" />
                         </el-tab-pane>
-                        <el-tab-pane label="实时">
-                            <el-row>
-                                <el-col :span="9" :offset="4">
-                                    <div style="height: 33vh; display: flex; justify-content: center; align-items: center; 
-                                    border-radius: 5px;
-                                    border-color: var(--el-border-color);
-                                    border-width: 1px;
-                                    border-style: dashed;
-                                ">
-                                        <el-button v-if="!showPcCamera" @click="showPcCamera = true" type="primary">
-                                            打开电脑摄像头
-                                        </el-button>
-
-                                        <el-tooltip placement="top" content="点击画面关闭摄像头" v-if="showPcCamera">
-                                            <img src="http://127.0.0.1:5000/matching/video_feed"
-                                                style="max-height: 33vh;" @click="closePcCamera">
-                                        </el-tooltip>
-                                    </div>
-
-                                </el-col>
-
-                                <el-col :span="1" style="display: flex; align-items: center; justify-content: center;">
-                                    <div style="width: 2.5vw;
-                        height: auto;
-                        display: flex;">
-                                        <SvgIcon iconName="icon-Right"></SvgIcon>
-                                    </div>
-                                </el-col>
-
-                                <el-col :span="6">
-                                    <div class="form-cantainer" style="margin-left: 20px;">
-                                        <div class="form-title">
-                                            <el-text style="font-size: 20px; color: #409EFF;">
-                                                选择方法
-                                            </el-text>
-                                        </div>
-                                        <div class="form">
-                                            <el-form :model="form" label-position="right" label-width="auto"
-                                                size="small">
-                                                <el-form-item label="算法分类:">
-                                                    <el-radio-group v-model="form.class" label-position="right">
-                                                        <el-radio-button label="稀疏" value="稀疏" />
-                                                        <el-radio-button label="半稀疏" value="半稀疏" />
-                                                        <el-radio-button label="稠密" value="稠密" />
-                                                    </el-radio-group>
-                                                </el-form-item>
-                                                <el-form-item label="匹配算法:">
-                                                    <el-radio-group v-model="form.matchmethod">
-                                                        <el-radio-button label="LoFTR" value="LoFTR" />
-                                                        <el-radio-button label="SuperGlue" value="SuperGlue"
-                                                            v-if="form.class === '稀疏'" />
-                                                        <el-radio-button label="BF" value="BF"
-                                                            v-if="form.class === '稀疏'" />
-                                                        <el-radio-button label="FLANN" value="FLANN"
-                                                            v-if="form.class === '稀疏'" />
-                                                    </el-radio-group>
-                                                </el-form-item>
-                                                <el-form-item label="检测器算法:" v-if="form.class === '稀疏'">
-                                                    <el-radio-group v-model="form.kptmethod">
-                                                        <el-radio-button label="SuperPoint" value="SuperPoint" />
-                                                        <el-radio-button label="SIFT" value="SIFT"
-                                                            :disabled="form.matchmethod === 'SuperGlue'" />
-                                                        <el-radio-button label="ORB" value="ORB"
-                                                            :disabled="form.matchmethod === 'SuperGlue'" />
-                                                    </el-radio-group>
-                                                </el-form-item>
-                                                <el-form-item label="算法场景:" v-if="showScene()">
-                                                    <el-radio-group v-model="form.scene">
-                                                        <el-radio-button label="室内" value="室内" />
-                                                        <el-radio-button label="室外" value="室外" />
-                                                    </el-radio-group>
-                                                </el-form-item>
-
-                                                <el-row style="height: 14px;">
-                                                    <el-col :offset="10">
-                                                        <el-text
-                                                            style="font-size: 12px; color: var(--el-text-color-secondary); line-height: 14px;">
-                                                            当前数据源为: {{ tabName }}
-                                                        </el-text>
-                                                    </el-col>
-                                                </el-row>
-                                                <br />
-
-                                                <el-form-item label="基准配置:" v-if="tabName === '多张图片'">
-                                                    <div class="custom-style">
-                                                        <el-segmented v-model="form.fix"
-                                                            :options="['首张作为基准', '前张作为基准']" />
-                                                    </div>
-                                                </el-form-item>
-                                                <el-form :inline="true" :model="form" class="demo-form-inline"
-                                                    size="small">
-                                                    <el-text style="margin-right: 5px;">skip: </el-text>
-                                                    <el-input v-model="form.skip" placeholder="1"
-                                                        style="width: 40px; margin-right: 5px;" />
-                                                    <el-tooltip class="box-item" effect="dark"
-                                                        content="匹配时跳过图片(帧)数, 视频建议30" placement="bottom">
-                                                        <el-icon>
-                                                            <SvgIcon icon-name="icon-tishi" />
-                                                        </el-icon>
-                                                    </el-tooltip>
-                                                </el-form>
-                                            </el-form>
-                                        </div>
-                                        <div class="submit">
-                                            <el-button type="primary" style="width: 50%;" @click="matching">
-                                                开始匹配
-                                            </el-button>
-                                        </div>
-                                    </div>
-                                </el-col>
-                            </el-row>
-
-                        </el-tab-pane>
                     </el-tabs>
                 </el-col>
             </el-row>
 
-            <el-row v-if="tabName !== '实时'">
-                <el-col :span="2" :offset="3" style="display: flex; justify-content: center;">
+            <el-row>
+                <el-col :span="2" :offset="2" style="display: flex; justify-content: center;">
                     <div style="
                     margin: 10px 10px;
                     width: auto;
@@ -162,102 +49,90 @@
                 </el-col>
             </el-row>
 
-            <el-row v-if="tabName === '实时'">
-                <el-col :span="2" :offset="10" style="display: flex; justify-content: center;">
-                    <div style="
-                    margin: 10px 10px;
-                    width: auto;
-                    height: 3vh;
-                    display: flex;">
-                        <SvgIcon icon-name="icon-Down" />
-                    </div>
-                </el-col>
-            </el-row>
 
-            <el-row style="height: 33vh;" v-if="tabName !== '实时'">
+            <el-row style="height: 33vh;">
                 <el-col :span="6">
                     <div class="form-cantainer">
-                        <div class="form-title">
-                            <el-text style="font-size: 20px; color: #409EFF;">
-                                选择方法
-                            </el-text>
-                        </div>
-                        <div class="form">
-                            <el-form :model="form" label-position="right" label-width="auto" size="small">
-                                <el-form-item label="算法分类:">
-                                    <el-radio-group v-model="form.class" label-position="right">
-                                        <el-radio-button label="稀疏" value="稀疏" />
-                                        <el-radio-button label="半稀疏" value="半稀疏" />
-                                        <el-radio-button label="稠密" value="稠密" />
-                                    </el-radio-group>
-                                </el-form-item>
-                                <el-form-item label="匹配算法:">
-                                    <el-radio-group v-model="form.matchmethod">
-                                        <el-radio-button label="LoFTR" value="LoFTR" v-if="form.class === '半稀疏'" />
-                                        <el-radio-button label="Efficient LoFTR" value="ELoFTR"
-                                            v-if="form.class === '半稀疏'" />
-                                        <el-radio-button label="DKM" value="DKM" v-if="form.class === '稠密'" />
-                                        <el-radio-button label="SuperGlue" value="SuperGlue"
-                                            v-if="form.class === '稀疏'" />
-                                        <el-radio-button label="BF" value="BF" v-if="form.class === '稀疏'" />
-                                        <el-radio-button label="FLANN" value="FLANN" v-if="form.class === '稀疏'" />
-                                    </el-radio-group>
-                                </el-form-item>
-                                <el-form-item label="检测器算法:" v-if="form.class === '稀疏'">
-                                    <el-radio-group v-model="form.kptmethod">
-                                        <el-radio-button label="SuperPoint" value="SuperPoint" />
-                                        <el-radio-button label="SIFT" value="SIFT"
-                                            :disabled="form.matchmethod === 'SuperGlue'" />
-                                        <el-radio-button label="ORB" value="ORB"
-                                            :disabled="form.matchmethod === 'SuperGlue'" />
-                                    </el-radio-group>
-                                </el-form-item>
-                                <el-form-item label="算法场景:" v-if="showScene()">
-                                    <el-radio-group v-model="form.scene">
-                                        <el-radio-button label="室内" value="室内" />
-                                        <el-radio-button label="室外" value="室外" />
-                                    </el-radio-group>
-                                </el-form-item>
-                                <el-form-item label="模型类型:" v-if="form.matchmethod === 'ELoFTR'">
-                                    <el-radio-group v-model="form.model_type">
-                                        <el-radio-button label="高精度" value="full" />
-                                        <el-radio-button label="高速度" value="opt" />
-                                    </el-radio-group>
-                                </el-form-item>
-                                <el-form-item label="模型精度:" v-if="form.matchmethod === 'ELoFTR'">
-                                    <el-radio-group v-model="form.precision">
-                                        <el-radio-button label="fp32" value="fp32" />
-                                        <el-radio-button label="fp16" value="fp16" />
-                                        <el-radio-button label="mp" value="mp" />
-                                    </el-radio-group>
-                                </el-form-item>
-                                <el-row style="height: 14px;">
-                                    <el-col :offset="10">
-                                        <el-text
-                                            style="font-size: 12px; color: var(--el-text-color-secondary); line-height: 14px;">
-                                            当前数据源为: {{ tabName }}
-                                        </el-text>
-                                    </el-col>
-                                </el-row>
-                                <br />
+                        <div class="form-body">
+                            <div class="form">
+                                <el-form :model="form" label-position="right" label-width="auto" size="small">
+                                    <el-form-item label="算法分类:">
+                                        <el-radio-group v-model="form.class" label-position="right">
+                                            <el-radio-button label="稀疏" value="稀疏" />
+                                            <el-radio-button label="半稀疏" value="半稀疏" />
+                                            <el-radio-button label="稠密" value="稠密" />
+                                        </el-radio-group>
+                                    </el-form-item>
+                                    <el-form-item label="匹配算法:">
+                                        <el-radio-group v-model="form.matchmethod">
+                                            <el-radio-button label="LoFTR" value="LoFTR" v-if="form.class === '半稀疏'" />
+                                            <el-radio-button label="ASpanFormer" value="ASpanFormer"
+                                                v-if="form.class === '半稀疏'" />
+                                            <el-radio-button label="DKM" value="DKM" v-if="form.class === '稠密'" />
+                                            <el-radio-button label="SuperGlue" value="SuperGlue"
+                                                v-if="form.class === '稀疏'" />
+                                            <el-radio-button label="BF" value="BF" v-if="form.class === '稀疏'" />
+                                            <el-radio-button label="FLANN" value="FLANN" v-if="form.class === '稀疏'" />
+                                        </el-radio-group>
+                                    </el-form-item>
+                                    <el-form-item label="检测器算法:" v-if="form.class === '稀疏'">
+                                        <el-radio-group v-model="form.kptmethod">
+                                            <el-radio-button label="SuperPoint" value="SuperPoint" />
+                                            <el-radio-button label="SIFT" value="SIFT"
+                                                :disabled="form.matchmethod === 'SuperGlue'" />
+                                            <el-radio-button label="ORB" value="ORB"
+                                                :disabled="form.matchmethod === 'SuperGlue'" />
+                                        </el-radio-group>
+                                    </el-form-item>
 
-                                <el-form-item label="基准配置:" v-if="tabName === '多张图片' || tabName === '视频'">
-                                    <div class="custom-style">
-                                        <el-segmented v-model="form.fix" :options="['首张作为基准', '前张作为基准']" />
-                                    </div>
-                                </el-form-item>
-                                <el-form :inline="true" :model="form" class="demo-form-inline" size="small">
-                                    <el-text style="margin-right: 5px;">skip: </el-text>
-                                    <el-input v-model="form.skip" placeholder="1"
-                                        style="width: 40px; margin-right: 5px;" />
-                                    <el-tooltip class="box-item" effect="dark" content="匹配时跳过图片数，视频建议30，即（2 fps）"
-                                        placement="bottom">
-                                        <el-icon>
-                                            <SvgIcon icon-name="icon-tishi" />
-                                        </el-icon>
-                                    </el-tooltip>
+                                    <el-row style="height: 14px;">
+                                        <el-col :offset="10">
+                                            <el-text
+                                                style="font-size: 12px; color: var(--el-text-color-secondary); line-height: 14px;">
+                                                当前数据源为: {{ tabName }}
+                                            </el-text>
+                                        </el-col>
+                                    </el-row>
+                                    <br />
+
+                                    <el-form :inline="true" :model="form" class="demo-form-inline" size="small">
+                                        <el-form-item label="算法场景:" v-if="showScene()">
+                                            <el-radio-group v-model="config.scene">
+                                                <el-radio-button label="室内" value="室内" />
+                                                <el-radio-button label="室外" value="室外" />
+                                            </el-radio-group>
+                                        </el-form-item>
+                                        <el-form-item>
+                                            <el-text>skip: </el-text>
+                                            <el-input v-model="config.skip" placeholder="1"
+                                                style="width: 30px; margin-right: 5px;" />
+                                            <el-tooltip class="box-item" effect="dark"
+                                                content="匹配时跳过图片数，视频建议30，即（2 fps）" placement="top">
+                                                <el-icon>
+                                                    <SvgIcon icon-name="icon-tishi" />
+                                                </el-icon>
+                                            </el-tooltip>
+                                        </el-form-item>
+                                        <el-form-item v-if="tabName === '多张图片' || tabName === '视频'">
+                                            <el-text>fps: </el-text>
+                                            <el-input v-model="config.fps" placeholder="1"
+                                                style="width: 30px; margin-right: 5px;" />
+                                            <el-tooltip class="box-item" effect="dark" content="结果每秒帧数" placement="top">
+                                                <el-icon>
+                                                    <SvgIcon icon-name="icon-tishi" />
+                                                </el-icon>
+                                            </el-tooltip>
+                                        </el-form-item>
+                                        <el-form-item label="基准配置:" v-if="tabName === '多张图片' || tabName === '视频'">
+                                            <el-radio-group v-model="config.fix">
+                                                <el-radio-button label="首张作为基准" value="首张作为基准" />
+                                                <el-radio-button label="前张作为基准" value="前张作为基准" />
+                                            </el-radio-group>
+                                        </el-form-item>
+
+                                    </el-form>
                                 </el-form>
-                            </el-form>
+                            </div>
                         </div>
                         <div class="submit">
                             <el-button type="primary" style="width: 50%;" @click="matching">
@@ -283,11 +158,15 @@
                             style="height: 100%; width: 100%;" />
 
                         <div v-if="result_path_url !== ''" id="resImg" style="height: 100%; width: 100%;">
+
                             <el-row style="height: 100%; width: 100%;">
                                 <el-col :span="18" :offset="1" style="height: 100%; width: 100%;">
-                                    <img :src="result_path_url" alt="展示结果失败" v-if="tabName === '两张图片'"
-                                        style="max-height: 98%; max-width: 98%;" />
-
+                                    <el-tooltip placement="top" content="点击放大">
+                                        <el-image style="height: 100%; width: 100%;" fit="contain"
+                                            :src="result_path_url" :preview-src-list="[result_path_url]"
+                                            alt="Preview Image" hide-on-click-modal preview-teleported
+                                            v-if="tabName === '两张图片'" />
+                                    </el-tooltip>
                                     <video autoplay loop controls :key="result_path_url"
                                         v-if="tabName === '多张图片' || tabName === '视频'"
                                         style="height: 100%; width: 100%;">
@@ -295,7 +174,6 @@
                                         结果为视频，您的浏览器不支持 video 标签。
                                     </video>
                                 </el-col>
-
 
                                 <el-col :span="5">
                                     <div class="result-text">
@@ -330,14 +208,6 @@
                     </div>
                 </el-col>
             </el-row>
-
-            <el-row v-if="tabName === '实时'">
-                <el-col :span="24" style="display: flex; justify-content: center;">
-                    <div class="result" style="height: 34vh;">
-                        <el-empty description="结果将展示在这里" v-if="result_path_url === ''" />
-                    </div>
-                </el-col>
-            </el-row>
         </el-scrollbar>
     </div>
 </template>
@@ -359,6 +229,9 @@ import UploadVideo from "@/components/UploadVideo.vue";
 import { useUploadImagesStore } from "@/stores/UploadImagesStore";
 import { useUploadImagePairStore } from "@/stores/UploadImagePairStore";
 import { useUploadVideoStore } from "@/stores/UploadVideo";
+import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/UserStore";
+import { jwt_refresh } from "@/utils/JWT";
 
 let pair = ref(null)
 let images = ref(null)
@@ -378,6 +251,10 @@ onBeforeUnmount(() => {
     }
 })
 
+const router = useRouter()
+const userStore = useUserStore()
+let { username, access_token } = userStore
+
 // 获取选择的 TabName
 let tabName = ref('两张图片')
 const tabClick = (tab: any) => {
@@ -394,14 +271,6 @@ const tabClick = (tab: any) => {
         (video.value as any).init()
     }
 }
-// 实时
-let showPcCamera = ref(false)
-const closePcCamera = async () => {
-    await axios.delete('http://127.0.0.1:5000/matching/video_feed').then(res => {
-        if (res.data.code == 200)
-            showPcCamera.value = false
-    })
-}
 // 步骤条
 let stepsActive = ref(0)
 const setStepsActive1 = () => {
@@ -415,22 +284,23 @@ let form = reactive({
     class: '稀疏',
     kptmethod: 'SuperPoint',
     matchmethod: 'SuperGlue',
+})
+let config = reactive({
     scene: '室内',
     fix: '首张作为基准',
     skip: 1,
-    model_type: 'full',
-    precision: 'fp32'
+    fps: 1
 })
 const showScene = () =>
     (form.class === '稀疏' && (form.matchmethod === 'LoFTR' || form.matchmethod === 'SuperGlue')) ||
-    (form.class === '半稀疏' && form.matchmethod === 'LoFTR') ||
+    (form.class === '半稀疏' && (form.matchmethod === 'LoFTR' || form.matchmethod === 'ASpanFormer')) ||
     (form.class === '稠密' && form.matchmethod === 'DKM');
 
 watchEffect(() => {
     if (form.class === '稀疏' && form.matchmethod !== 'SuperGlue' && form.matchmethod !== 'BF' && form.matchmethod !== 'FLANN') {
         form.matchmethod = 'SuperGlue'
     }
-    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'ELoFTR') {
+    if (form.class === '半稀疏' && form.matchmethod !== 'LoFTR' && form.matchmethod !== 'ASpanFormer') {
         form.matchmethod = 'LoFTR'
     }
     if (form.class === '稠密' && form.matchmethod !== 'DKM') {
@@ -443,9 +313,9 @@ watchEffect(() => {
     }
 
     if (tabName.value === '实时' || tabName.value === '视频') {
-        form.skip = 30
+        config.skip = 30
     } else {
-        form.skip = 1
+        config.skip = 1
     }
 })
 
@@ -455,9 +325,10 @@ let result_path = ref('') // 结果图片路径
 let result_path_url = ref('') // 结果文件路径 url
 let result_matches_path = ref('') // 匹配结果路径
 let result_poses_path = ref('') // 位姿结果路径
+let matchingTime = ref('')
 
 const isRunning = ref(false); // 是否正在计时
-const elapsedTime = ref(0); // 已耗时（以毫秒为单位）
+let elapsedTime = ref(0); // 已耗时（以毫秒为单位）
 let intervalId: any = null; // setInterval的ID
 
 const formatTime = (milliseconds: any) => {
@@ -467,8 +338,6 @@ const formatTime = (milliseconds: any) => {
 
 // 启动计时器
 const startTimer = () => {
-    console.log(1);
-
     if (isRunning.value) return; // 如果已经在计时，直接返回
     isRunning.value = true; // 更新状态为“正在计时”
     intervalId = setInterval(() => {
@@ -509,7 +378,8 @@ const matchingPairs = async () => {
         'dir_name': dir_name,
         'leftpath': leftpath,
         'rightpath': rightpath,
-        'form': form
+        'form': form,
+        'config': config
     }
     resetTimer()
     startTimer()
@@ -521,8 +391,29 @@ const matchingPairs = async () => {
                 result_path_url.value = response.data.save_path_url
                 result_matches_path.value = response.data.save_matches_path
                 result_poses_path.value = response.data.save_poses_path
+                matchingTime.value = response.data.matchingTimes
 
                 stepsActive.value = 2
+
+                if (username != null && username != '' && username != '登陆') {
+                    let { leftpath_url, rightpath_url } = imagePairStore
+                    const postInfo = {
+                        'username': username,
+                        'origin_type': tabName.value,
+                        'path': path,
+                        'left_url': leftpath_url,
+                        'right_url': rightpath_url,
+                        'algorithm_type': form.class,
+                        'algorithm': form.class !== '稀疏' ? form.matchmethod : form.matchmethod + '_' + form.kptmethod,
+                        'config': JSON.stringify(config),
+                        'elapsed_time': matchingTime.value,
+                        'save_path': result_path.value,
+                        'save_path_url': result_path_url.value,
+                        'save_matches_path': result_matches_path.value,
+                        'save_poses_path': result_poses_path.value
+                    }
+                    addMatchingRecord(postInfo)
+                }
 
                 ElNotification.success({
                     title: '操作成功',
@@ -541,7 +432,7 @@ const matchingPairs = async () => {
 
 // 匹配多张图片 及 视频
 const matchingIamgesAndVideo = async () => {
-    let path, dir_name;
+    let path: any, dir_name;
     if (tabName.value === '多张图片') {
         const matchingUploadImagesStore = useUploadImagesStore()
         let { path: imagePath, dir_name: imageDirName, filesInfo } = matchingUploadImagesStore
@@ -570,6 +461,7 @@ const matchingIamgesAndVideo = async () => {
         'dir_name': dir_name,
         'type': tabName.value,
         'form': form,
+        'config': config
     }
     resetTimer()
     startTimer()
@@ -582,8 +474,32 @@ const matchingIamgesAndVideo = async () => {
                 result_path_url.value = response.data.save_path_url
                 result_matches_path.value = response.data.save_matches_path
                 result_poses_path.value = response.data.save_poses_path
+                matchingTime.value = response.data.matchingTimes
 
                 stepsActive.value = 2
+
+                if (username != null && username != '' && username != '登陆') {
+                    const postInfo = {
+                        'username': username,
+                        'origin_type': tabName.value,
+                        'path': path,
+                        'video_url': '',
+                        'algorithm_type': form.class,
+                        'algorithm': form.class !== '稀疏' ? form.matchmethod : form.matchmethod + '_' + form.kptmethod,
+                        'config': JSON.stringify(config),
+                        'elapsed_time': matchingTime.value,
+                        'save_path': result_path.value,
+                        'save_path_url': result_path_url.value,
+                        'save_matches_path': result_matches_path.value,
+                        'save_poses_path': result_poses_path.value
+                    }
+                    if (tabName.value === '视频') {
+                        const matchingUploadVideoStore = useUploadVideoStore()
+                        let { filepath_url } = matchingUploadVideoStore
+                        postInfo.video_url = filepath_url
+                    }
+                    addMatchingRecord(postInfo)
+                }
 
                 ElNotification.success({
                     title: '操作成功',
@@ -600,11 +516,6 @@ const matchingIamgesAndVideo = async () => {
     resLoading.value = false
 }
 
-// 实时匹配
-const matchingRealTime = async () => {
-    await axios.post('http://127.0.0.1:5000/matching', form)
-}
-
 // 匹配按钮
 const matching = async () => {
     resLoading.value = true
@@ -612,8 +523,6 @@ const matching = async () => {
         matchingPairs()
     } else if (tabName.value === '多张图片' || tabName.value === '视频') {
         matchingIamgesAndVideo()
-    } else if (tabName.value === '实时') {
-        matchingRealTime()
     }
 }
 
@@ -640,8 +549,6 @@ async function downloadPose() {
     download(post_info)
 }
 const download = async (post_info: any) => {
-    console.log(post_info);
-
     await axios.post('http://127.0.0.1:5000/matching/download', post_info, {
         responseType: 'blob'
     }).then((response) => {
@@ -668,6 +575,34 @@ const download = async (post_info: any) => {
     }).catch((error) => {
         ElNotification.error('下载失败:', error);
     });
+}
+
+const addMatchingRecord = async (postInfo: any) => {
+    const headers = {
+        Authorization: 'Bearer ' + access_token,
+    };
+
+    await axios.post('http://127.0.0.1:5000/matching/record', postInfo, { headers })
+        .then((res) => {
+            let response: responseType = res.data
+
+            if (response.code === 200) {
+
+                ElNotification.success({
+                    title: response.msg,
+                    message: response.data
+                })
+            }
+
+        }).catch((error) => {
+            if (error.response.status == 401 && error.response.data.msg == "Token has expired") {
+                ElNotification.error({
+                    title: '更新用户token中...',
+                    message: '太久未登陆, token 已过期, 稍后重试'
+                })
+                jwt_refresh(router)
+            }
+        })
 }
 
 </script>
@@ -697,19 +632,17 @@ const download = async (post_info: any) => {
     border-style: dashed;
 }
 
-.form-title {
+.form-body {
+    height: 90%;
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 10%;
-    margin-top: 10px;
 }
 
 .form {
     display: flex;
     margin-left: 10px;
     align-items: center;
-    height: 75%;
+    height: 100%;
 }
 
 .custom-style .el-segmented {
@@ -719,7 +652,7 @@ const download = async (post_info: any) => {
 }
 
 .submit {
-    height: 5%;
+    height: 10%;
     display: flex;
     justify-content: center;
 }
