@@ -86,6 +86,23 @@ let form = reactive({
 
 let warning = ref(false)
 
+let { role } = userStore
+onMounted(async () => {
+    if (username.value == '登陆' || gender.value == '' || role == '') {
+        ElNotification.error({
+            title: '未登陆！',
+            message: '请先登陆'
+        })
+        router.push('/login')
+    } else {
+        try {
+            getInfo()
+        } catch (error) {
+            ElMessage.error('请求失败' + error)
+        }
+    }
+})
+
 const getInfo = async () => {
     const headers = {
         Authorization: 'Bearer ' + access_token,
@@ -125,13 +142,6 @@ const getInfo = async () => {
     })
 }
 
-onMounted(async () => {
-    try {
-        getInfo()
-    } catch (error) {
-        ElMessage.error('请求失败' + error)
-    }
-})
 
 
 const onSubmit = async () => {

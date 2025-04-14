@@ -37,7 +37,7 @@ const router = createRouter({
           component: Introduction,
         },
         {
-          name: '特征点检测',
+          name: '特征检测',
           path: '/detection',
           component: FeatureDetection,
         },

@@ -201,6 +201,23 @@ const filterRole = (value: string, row: userType) => {
     return row.role === value
 }
 
+let { username, gender, role } = userStore
+onMounted(async () => {
+    if (username == '登陆' || gender == '' || role == '') {
+        ElNotification.error({
+            title: '未登陆！',
+            message: '请先登陆'
+        })
+        router.push('/login')
+    } else {
+        try {
+            getTotal()
+            getInfo()
+        } catch (error) {
+            console.error('请求失败:', error)
+        }
+    }
+})
 
 // 查
 const getTotal = async () => {
@@ -274,14 +291,7 @@ const getInfo = async () => {
             }
         })
 }
-onMounted(async () => {
-    try {
-        getTotal()
-        getInfo()
-    } catch (error) {
-        console.error('请求失败:', error)
-    }
-})
+
 const handleSizeChange = async (newPageSize: number) => {
     await axios.get('http://127.0.0.1:5000/user/' + newPageSize + '/' + currentPage.value, { headers })
         .then((res) => {

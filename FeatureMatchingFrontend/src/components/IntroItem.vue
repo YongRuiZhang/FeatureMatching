@@ -24,19 +24,38 @@
 
         <el-row>
             <el-col :span="20" :offset="2">
-                <div class="content">
+                <div class="content" v-if="paper.language === true">
                     {{ paper.content }}
+                </div>
+                <div class="content" v-if="paper.language === false">
+                    {{ paper.content_ch }}
                 </div>
             </el-col>
         </el-row>
-        <el-row></el-row>
+        <el-row>
+            <el-col :offset="2">
+                <el-switch v-model="localLanguage" inline-prompt active-text="中" inactive-text="en"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: blue" @change="handleLanguageChange" />
+            </el-col>
+        </el-row>
         <el-divider border-style="dotted" />
-        <el-row></el-row>
+        <el-row>
+
+        </el-row>
     </div>
 </template>
 
 <script lang='ts' setup name='IntroItem'>
-const prop = defineProps(['paper'])
+import { ref } from 'vue';
+
+const prop = defineProps(['paper']);
+const emit = defineEmits(['update-language']);
+
+const localLanguage = ref(prop.paper.language);
+
+const handleLanguageChange = () => {
+    emit('update-language', prop.paper.id, !prop.paper.language);
+};
 
 </script>
 
