@@ -5,13 +5,13 @@
                 <el-text class="title">用户信息管理</el-text>
             </el-col>
             <el-col :span="17" style="display: flex; align-items: center;">
-                <el-input v-model="searchName" placeholder="通过 User Name 查找"
+                <el-input v-model="searchName" placeholder="通过用户名查找"
                     style="width: 10vw; min-width: 180px; margin-right: 10px;" />
-                <el-input v-model="searchEmail" placeholder="通过 Email 查找"
+                <el-input v-model="searchEmail" placeholder="通过邮箱查找"
                     style="width: 9vw; min-width: 160px; margin-right: 10px;" />
-                <el-input v-model="searchRegisterDate" placeholder="通过 Register Date 查找"
+                <el-input v-model="searchRegisterDate" placeholder="通过注册时间查找"
                     style="width: 11vw;  min-width: 180px;margin-right: 10px;" />
-                <el-input v-model="searchBirthday" placeholder="通过 Birthday 查找"
+                <el-input v-model="searchBirthday" placeholder="通过生日查找"
                     style="width: 10vw; min-width: 160px; margin-right: 10px;" />
                 <el-tooltip class="box-item" effect="dark" content="注意：查找功能只能查找当前页的记录。您要找的记录可能存在于其他页"
                     placement="bottom">
@@ -97,37 +97,37 @@
         <div class="table-container">
             <el-table :data="filterTableData" style="width: 100%"
                 :default-sort="{ prop: 'register_date', order: 'descending' }" @selection-change="handleSelectionChange"
-                height="800" :table-layout="'auto'">
-                <el-table-column type="selection" width="55" />
-                <el-table-column fixed prop="id" label="User ID" width="160" show-overflow-tooltip />
-                <el-table-column fixed prop="username" label="User Name" width="160" />
-                <el-table-column prop="gender" label="Gender" width="140" :filters="[
+                height="800" :table-layout="'auto'" :header-cell-style="{ 'text-align': 'center' }">
+                <el-table-column type="selection" width="60" align="center" />
+                <el-table-column fixed prop="id" label="用户编号" width="200" show-overflow-tooltip />
+                <el-table-column fixed prop="username" label="用户名" width="170" align="center" />
+                <el-table-column prop="gender" label="性别" width="150" :filters="[
                     { text: 'Male', value: 'male' },
                     { text: 'Female', value: 'female' },
-                ]" :filter-method="filterGender" filter-placement="bottom-end">
+                ]" :filter-method="filterGender" filter-placement="bottom-end" align="center">
                     <template #default="scope">
                         <el-tag style="width: 80%;" :type="scope.row.gender === 'male' ? 'primary' : 'success'"
                             disable-transitions>{{
                                 scope.row.gender }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="role" label="Role" width="140" :filters="[
+                <el-table-column prop="role" label="角色类型" width="150" :filters="[
                     { text: 'Admin', value: 'admin' },
                     { text: 'Guest', value: 'guest' },
-                ]" :filter-method="filterRole" filter-placement="bottom-end">
+                ]" :filter-method="filterRole" filter-placement="bottom-end" align="center">
                     <template #default="scope">
                         <el-tag style="width: 80%;" :type="scope.row.role === 'admin' ? 'primary' : 'success'"
                             disable-transitions>{{
                                 scope.row.role }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="register_date" label="Register Date" width="240" sortable />
-                <el-table-column prop="email" label="Email" width="240" />
-                <el-table-column prop="birthday" label="Birthday" width="200" />
-                <el-table-column fixed="right" label="Operations" min-width="160">
+                <el-table-column prop="register_date" label="注册时间" width="260" sortable align="center" />
+                <el-table-column prop="email" label="邮箱" width="240" align="center" />
+                <el-table-column prop="birthday" label="生日" width="220" align="center" />
+                <el-table-column label="操作" width="160" align="center">
                     <template #default="scope">
-                        <el-button link type="primary" size="large" @click="editSomeOne(scope.row)">Edit</el-button>
-                        <el-button link type="primary" size="large" @click="deleteSomeOne(scope.row)">Delete</el-button>
+                        <el-button link type="primary" size="large" @click="editSomeOne(scope.row)">修改信息</el-button>
+                        <el-button link type="primary" size="large" @click="deleteSomeOne(scope.row)">删除用户</el-button>
                     </template>
                 </el-table-column>
             </el-table>

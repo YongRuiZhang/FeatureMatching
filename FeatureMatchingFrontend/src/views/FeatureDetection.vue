@@ -141,15 +141,39 @@
                 </el-form>
             </el-col>
             <el-col :span="12" v-if="haveResPic">
-                <el-text size="large"> 图像宽度：{{ width }}, 图像高度：{{ height }}</el-text>
-                <el-text size="large"> 特征点个数：{{ num_kpts }}, 耗时：{{ detectionTimes / 1000 }} ms</el-text>
                 <br />
-                <el-button type="success" round @click="downloadImage">结果图片下载</el-button>
-                <el-button type="warning" round @click="downloadKpts">kpts下载</el-button>
-                <el-button type="warning" round @click="downloadScores"
-                    v-if="form.method === 'SuperPoint'">Scores下载</el-button>
-                <el-button type="warning" round @click="downloadDes">Descriptors下载</el-button>
-
+                <el-row>
+                    <el-col :span="6">
+                        <ResCard style="height: 50px; width: 200px;" :name="'图像宽度'" :res="width"></ResCard>
+                    </el-col>
+                    <el-col :span="6">
+                        <ResCard style="height: 50px; width: 200px;" :name="'图像高度'" :res="height"></ResCard>
+                    </el-col>
+                    <el-col :span="6">
+                        <ResCard style="height: 50px; width: 200px;" :name="'特征点个数'" :res="num_kpts"></ResCard>
+                    </el-col>
+                    <el-col :span="6">
+                        <ResCard style="height: 50px; width: 200px;" :name="'耗时'" :res="detectionTimes / 1000">
+                        </ResCard>
+                    </el-col>
+                </el-row>
+                <br />
+                <el-row :gutter="2">
+                    <el-col :span="6">
+                        <el-button type="success" round @click="downloadImage" style="width: 100%;">结果图片下载</el-button>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="warning" round @click="downloadKpts" style="width: 100%;">kpts下载</el-button>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="warning" round @click="downloadDes"
+                            style="width: 100%;">Descriptors下载</el-button>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="warning" round @click="downloadScores" style="width: 100%;"
+                            v-if="form.method === 'SuperPoint'">Scores下载</el-button>
+                    </el-col>
+                </el-row>
             </el-col>
         </el-row>
     </div>
@@ -160,6 +184,7 @@ import { reactive, ref } from "vue"
 import { UploadFilled, Picture, Download } from '@element-plus/icons-vue'
 import axios from "axios"
 import { ElMessage, ElNotification, type UploadFile } from "element-plus"
+import ResCard from '@/components/ResCard.vue'
 import { type responseType } from '@/types/index'
 import { useUserStore } from "@/stores/UserStore"
 import { useRouter } from 'vue-router'

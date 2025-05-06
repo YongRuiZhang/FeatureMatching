@@ -6,7 +6,7 @@
                     {{ paper.name }}
                 </div>
             </el-col>
-            <el-col :span="16" class="top-right">
+            <el-col :span="14" class="top-right">
                 <el-row style="height: 100%; padding: 0; justify-content: start; margin: 0;">
                     <el-col :span="24" class="top-right-up">
                         <div class="tag">
@@ -19,6 +19,10 @@
                         </div>
                     </el-col>
                 </el-row>
+            </el-col>
+            <el-col :span="2" style="display: flex; justify-content: end;">
+                <el-switch v-model="localLanguage" inline-prompt active-text="中" inactive-text="en"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: blue" @change="handleLanguageChange" />
             </el-col>
         </el-row>
 
@@ -33,10 +37,7 @@
             </el-col>
         </el-row>
         <el-row>
-            <el-col :offset="2">
-                <el-switch v-model="localLanguage" inline-prompt active-text="中" inactive-text="en"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: blue" @change="handleLanguageChange" />
-            </el-col>
+
         </el-row>
         <el-divider border-style="dotted" />
         <el-row>

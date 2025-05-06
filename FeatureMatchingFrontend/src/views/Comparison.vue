@@ -1,13 +1,13 @@
 <template>
     <div>
         <el-scrollbar class="main">
-            <el-row style="height: 6vh;">
+            <!-- <el-row style="height: 6vh;">
                 <el-col :span="4">
                     <div id="mytitle">
                         <el-text class="mx-1" style="font-size: 26px">模型比较</el-text>
                     </div>
                 </el-col>
-            </el-row>
+            </el-row> -->
             <el-row>
                 <el-col :span="8" :offset="7">
                     <el-text style="display: flex; justify-content: center; font-size: 20px; font-weight: 600;">

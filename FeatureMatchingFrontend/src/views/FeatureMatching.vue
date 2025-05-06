@@ -177,9 +177,11 @@
 
                                 <el-col :span="5">
                                     <div class="result-text">
-                                        <el-text>
+                                        <!-- <el-text>
                                             总耗时: {{ formatTime(elapsedTime) }}
-                                        </el-text>
+                                        </el-text> -->
+                                        <ResCard style="height: 50px; width: 200px;" :name="'总耗时'"
+                                            :res="formatTime(elapsedTime)"></ResCard>
                                     </div>
                                     <br />
                                     <div class="result-button">
@@ -218,6 +220,8 @@ import axios from "axios";
 
 import { UploadFilled, Picture, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification } from "element-plus";
+
+import ResCard from '@/components/ResCard.vue'
 
 import type { responseType } from "@/types";
 
@@ -667,14 +671,14 @@ const addMatchingRecord = async (postInfo: any) => {
 }
 
 .result-text {
-    height: 10%;
+    height: 20%;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .result-button {
-    height: 90%;
+    height: 80%;
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;

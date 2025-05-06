@@ -134,15 +134,15 @@
                                     </el-tooltip>
                                 </el-col>
 
-                                <el-col :span="4" :offset="1">
+                                <el-col :span="4">
                                     <div class="result-text">
-                                        <el-text>
-                                            总耗时: {{ formatTime(elapsedTime) }}
-                                        </el-text>
+                                        <ResCard style="height: 50px; width: 180px;" :name="'总耗时'"
+                                            :res="formatTime(elapsedTime)"></ResCard>
                                     </div>
                                     <br>
                                     <div class="result-button">
-                                        <el-button type="success" round @click="downloadImage">
+                                        <el-button type="success" round @click="downloadImage"
+                                            style="width: 180px; margin-left: 10px;">
                                             <el-tooltip placement="top" class="box-item" effect="dark"
                                                 content="下载左侧展示内容">
                                                 可视化结果下载
@@ -166,6 +166,7 @@ import axios from "axios"
 import { UploadFilled, Picture, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification } from "element-plus"
 
+import ResCard from '@/components/ResCard.vue'
 import UploadImagePair from '@/components/UploadImagePair.vue'
 import { useUploadImagePairStore } from "@/stores/UploadImagePairStore"
 import type { responseType } from "@/types"
@@ -445,5 +446,12 @@ const addMosaicRecord = async (postInfo: any) => {
     border-color: var(--el-border-color);
     border-width: 1px;
     border-style: dashed;
+}
+
+.result-text {
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 </style>
