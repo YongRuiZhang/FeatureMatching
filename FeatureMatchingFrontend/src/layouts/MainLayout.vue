@@ -60,13 +60,6 @@
                             <template #title>图像拼接</template>
                         </el-menu-item>
 
-                        <!-- <el-menu-item index="/PoseEstimation">
-                            <el-icon>
-                                <View />
-                            </el-icon>
-                            <template #title>位姿估计</template>
-                        </el-menu-item> -->
-
                         <el-menu-item index="/Comparison">
                             <el-icon>
                                 <SvgIcon icon-name="icon-compare" />

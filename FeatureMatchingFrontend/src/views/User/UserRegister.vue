@@ -184,6 +184,7 @@ const handleRegister = async () => {
 }
 
 .submit-btn {
+    margin-left: 15px;
     width: 100%;
     padding: 15px;
     background: linear-gradient(to right, #3498db, #2980b9);

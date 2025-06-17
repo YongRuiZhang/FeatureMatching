@@ -4,7 +4,6 @@ import Introduction from '@/views/Introduction.vue'
 import FeatureDetection from '@/views/FeatureDetection.vue'
 import FeatureMatching from '@/views/FeatureMatching.vue'
 import Mosaic from '@/views/Mosaic.vue'
-import PoseEstimation from '@/views/PoseEstimation.vue'
 import Comparison from '@/views/Comparison.vue'
 import TestAxios from '@/test/testAxios.vue'
 import UserHome from '@/views/User/UserHome.vue'
@@ -50,11 +49,6 @@ const router = createRouter({
           name: '图像拼接',
           path: '/mosaic',
           component: Mosaic,
-        },
-        {
-          name: '位姿估计',
-          path: '/PoseEstimation',
-          component: PoseEstimation,
         },
         {
           name: '模型比较',

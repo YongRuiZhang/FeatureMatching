@@ -410,14 +410,13 @@ def compute_epipolar_error(kpts0, kpts1, T_0to1, K0, K1):
 def angle_error_mat(R1, R2):
     """ 求 矩阵 的 角度 误差 \arccos(\frac{tr(R1^T R2) - 1}{2}) """
     cos = (np.trace(np.dot(R1.T, R2)) - 1) / 2
-    cos = np.clip(cos, -1., 1.)  # 将 cos 的值限制在 [-1, 1] 范围内（小于 -1 取值为 -1， 大于 1 取值为 1）
-    return np.rad2deg(np.abs(np.arccos(cos)))  # 弧度制 转为 角度制
+    cos = np.clip(cos, -1., 1.)
+    return np.rad2deg(np.abs(np.arccos(cos)))
 
 
 def angle_error_vec(v1, v2):
     """
-    求 向量 的 角度 误差：
-        \arccos(\frac{v1 v2}{\Vert v1 \Vert \Vert v2 \Vert})
+    求 向量 的 角度 误差： \arccos(\frac{v1 v2}{\Vert v1 \Vert \Vert v2 \Vert})
      """
     n = np.linalg.norm(v1) * np.linalg.norm(v2)  # v1 和 v2 的二范式相乘
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2) / n, -1.0, 1.0)))  # 弧度制 转为 角度制

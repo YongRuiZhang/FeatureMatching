@@ -56,13 +56,6 @@
                             <template #title>图像拼接记录</template>
                         </el-menu-item>
 
-                        <!-- <el-menu-item index="/user/testAxios">
-                            <el-icon>
-                                <SvgIcon icon-name="icon-compare" />
-                            </el-icon>
-                            <template #title>测试Axios</template>
-                        </el-menu-item> -->
-
                         <hr style="margin-left: 10%; width: 80%; margin-top: 20px; margin-bottom: 20px;">
 
                         <el-menu-item index="/user/manage" v-if="role === 'admin'">

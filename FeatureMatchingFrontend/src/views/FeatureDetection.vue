@@ -18,6 +18,7 @@
         <div class="left">
             <el-upload class="upload-demo" drag action="http://127.0.0.1:5000/detection/upload" method="post"
                 name="file" multiple="flase" auto-upload="false" :on-success="uploadSuccess" :on-remove="removeFile">
+
                 <div id="uploadBox" v-if="!havePic">
                     <div>
                         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
