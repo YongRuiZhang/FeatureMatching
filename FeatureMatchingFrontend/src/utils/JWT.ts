@@ -9,8 +9,10 @@ export async function jwt_refresh(router: any) {
     Authorization: 'Bearer ' + refresh_token,
   }
 
+  let base_url = import.meta.env.VITE_APP_HOST
+
   await axios
-    .post('http://127.0.0.1:5000/user/refresh', {}, { headers })
+    .post(base_url + '/user/refresh', {}, { headers })
     .then((res) => {
       userStore.setAccessToken(res.data.data.access_token)
     })

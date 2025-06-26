@@ -48,12 +48,14 @@
 
                 <el-table-column label="数据源" width="160" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.viz_path[0]" :preview-src-list="scope.row.viz_path"
-                            hide-on-click-modal preview-teleported v-if="scope.row.origin_type != '视频'"
+                        <el-image :src="base_url + scope.row.viz_path[0]" :preview-src-list="scope.row.viz_path.map((item: string) => {
+                            return base_url + item
+                        })" hide-on-click-modal preview-teleported v-if="scope.row.origin_type != '视频'"
                             style="aspect-ratio: 16 / 10;" />
+
                         <video autoplay loop controls v-if="scope.row.origin_type === '视频'"
                             style="height: 100%; width: 100%;">
-                            <source :src="scope.row.viz_path" type="video/mp4">
+                            <source :src="base_url + scope.row.viz_path" type="video/mp4">
                             结果为视频，您的浏览器不支持 video 标签。
                         </video>
                     </template>
@@ -78,12 +80,13 @@
                 </el-table-column>
                 <el-table-column label="可视化结果" width="200" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.save_path_url" :preview-src-list="[scope.row.save_path_url]"
-                            hide-on-click-modal preview-teleported v-if="scope.row.origin_type == '两张图片'" />
+                        <el-image :src="base_url + scope.row.save_path_url"
+                            :preview-src-list="[base_url + scope.row.save_path_url]" hide-on-click-modal
+                            preview-teleported v-if="scope.row.origin_type == '两张图片'" />
                         <video autoplay loop controls
                             v-if="scope.row.origin_type === '多张图片' || scope.row.origin_type === '视频'"
                             style="height: 100%; width: 100%;">
-                            <source :src="scope.row.save_path_url" type="video/mp4">
+                            <source :src="base_url + scope.row.save_path_url" type="video/mp4">
                             结果为视频，您的浏览器不支持 video 标签。
                         </video>
                     </template>
@@ -136,7 +139,9 @@ import { ElMessage, ElMessageBox, ElNotification } from "element-plus"
 import { jwt_refresh } from "@/utils/JWT"
 import { useRouter } from 'vue-router'
 import { storeToRefs } from "pinia"
-import axios from "axios"
+import http from '@/utils/request'
+
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -199,7 +204,7 @@ onMounted(async () => {
 
 // 查
 const getTotal = async () => {
-    await axios.get('http://127.0.0.1:5000/matching/total/' + user_id.value, { headers })
+    await http.get('/matching/total/' + user_id.value, { headers })
         .then((res) => {
             let response: responseType = res.data
 
@@ -232,7 +237,7 @@ const getTotal = async () => {
         })
 }
 const getInfo = async () => {
-    await axios.get('http://127.0.0.1:5000/matching/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
+    await http.get('/matching/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -270,9 +275,6 @@ const getInfo = async () => {
 
                 tableData.splice(0, tableData.length);
                 Object.assign(tableData, records)
-
-                console.log(tableData);
-
             } else if (response.code === 300) {
                 ElNotification.error({
                     title: response.msg,
@@ -293,7 +295,7 @@ const getInfo = async () => {
 }
 
 const handleSizeChange = async (newPageSize: number) => {
-    await axios.get('http://127.0.0.1:5000/matching/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
+    await http.get('/matching/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -356,7 +358,7 @@ const handleSizeChange = async (newPageSize: number) => {
         })
 }
 const handleCurrentChange = async (newPage: number) => {
-    await axios.get('http://127.0.0.1:5000/matching/' + user_id.value + '/' + pageSize.value + '/' + newPage, { headers })
+    await http.get('/matching/' + user_id.value + '/' + pageSize.value + '/' + newPage, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -451,7 +453,7 @@ const deleteSome = () => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/matching/', { data: { 'deleteIds': deleteIds.value, 'user_id': user_id.value }, headers })
+        http.delete('/matching/', { data: { 'deleteIds': deleteIds.value, 'user_id': user_id.value }, headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -486,7 +488,7 @@ const deleteSomeOne = async (record: matchingRecordType) => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/matching/' + record.id + '/' + user_id.value, { headers })
+        http.delete('/matching/' + record.id + '/' + user_id.value, { headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -537,7 +539,7 @@ async function downloadPose(record: matchingRecordType) {
     download(post_info)
 }
 const download = async (post_info: any) => {
-    await axios.post('http://127.0.0.1:5000/matching/download', post_info, {
+    await http.post('/matching/download', post_info, {
         responseType: 'blob'
     }).then((response) => {
         if (response.status != 200) {

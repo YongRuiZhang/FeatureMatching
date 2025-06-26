@@ -29,7 +29,7 @@
 </template>
 
 <script lang='ts' setup name='UploadImages'>
-import axios from "axios";
+import http from '@/utils/request'
 import { ElMessage, ElNotification, type UploadFile } from "element-plus";
 import { onMounted, ref } from "vue"
 import type { UploadUserFile } from 'element-plus'
@@ -74,7 +74,7 @@ const submitUpload = async () => {
         postInfo.append('file', file.raw as File)
     });
 
-    await axios.post('http://127.0.0.1:5000/matching/upload_images', postInfo
+    await http.post('/matching/upload_images', postInfo
     ).then((res) => {
         let response: responseType = res.data
 
@@ -106,7 +106,7 @@ const submitUpload = async () => {
 const removeFile = async (uploadFile: any) => {
     filesInfo.value.forEach(async (item, index) => {
         if ((item as any).filename === uploadFile.name) {
-            await axios.delete('http://127.0.0.1:5000/matching/upload_images', {
+            await http.delete('/matching/upload_images', {
                 data: {
                     'path': path.value,
                     'name': uploadFile.name

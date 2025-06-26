@@ -38,8 +38,8 @@ def upload_image():
             if uid == '' or uid is None:  # 无目录，创建目录
                 uid = str(uuid.uuid4())
 
-                static_folder = current_app.static_folder
-                dir_path = os.path.join(static_folder, "mosaic")
+                files_folder = current_app.config['FILES_FOLDER']
+                dir_path = os.path.join(files_folder, "mosaic")
                 os.makedirs(dir_path, exist_ok=True)
                 dir_path = os.path.join(dir_path, "pair")
                 os.makedirs(dir_path, exist_ok=True)
@@ -47,7 +47,7 @@ def upload_image():
                 os.makedirs(dir_path, exist_ok=True)
 
             file_path = os.path.join(dir_path, filename)
-            file_path_url = current_app.root_path + "/src/assets/mosaic/pair/" + uid + '/' + filename
+            file_path_url = "files/mosaic/pair/" + uid + '/' + filename
 
             # 文件保存
             file.save(file_path, buffer_size=1000000000)
@@ -74,7 +74,7 @@ def mosaic():
         rightpath = request.json.get('rightpath')
         form = request.json.get('form')
 
-        save_path_url = current_app.root_path + "/src/assets/mosaic/pair/" + dir_name + '/res/'
+        save_path_url = "files/mosaic/pair/" + dir_name + '/res/'
 
         cls = form['class']
         kptMethod = form['kptmethod']

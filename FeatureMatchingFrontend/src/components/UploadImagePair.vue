@@ -19,7 +19,7 @@
                     </div>
 
                     <div v-if="left.havePic" id="myimage">
-                        <img :src="left.imagePath_url" alt="图片上传失败">
+                        <img :src="base_url + left.imagePath_url" alt="图片上传失败">
                     </div>
 
                     <template #tip>
@@ -47,7 +47,7 @@
                     </div>
 
                     <div v-if="right.havePic" id="myimage">
-                        <img :src="right.imagePath_url" alt="图片上传失败">
+                        <img :src="base_url + right.imagePath_url" alt="图片上传失败">
                     </div>
 
                     <template #tip>
@@ -61,17 +61,18 @@
 </template>
 
 <script lang='ts' setup name='UploadImagePair'>
-import type { responseType, uploadImageType } from "@/types"
-import { ElMessage, ElNotification } from "element-plus"
+import type { uploadImageType } from "@/types"
+import { ElNotification } from "element-plus"
 import { reactive, ref } from "vue"
 import { useUploadImagePairStore } from "@/stores/UploadImagePairStore";
-import axios from "axios";
 
 const store = useUploadImagePairStore()
 
 const props = defineProps(['setStepsActive1', 'setStepsActive0', 'api'])
 
 let api = ref<string>(props.api)
+
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
 
 let uid = ref<string>('') // uuid 的文件名
 let dir_path = ref<string>('') // 目录路径

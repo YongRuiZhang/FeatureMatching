@@ -37,7 +37,7 @@
 
 <script lang='ts' setup name='UserRegister'>
 import type { responseType } from '@/types'
-import axios from 'axios'
+import http from '@/utils/request'
 import { ElMessage, ElNotification } from 'element-plus'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -58,7 +58,7 @@ const handleRegister = async () => {
     if (password.value != confirmPassword.value) {
         ElMessage.error('两次密码不同')
     } else {
-        await axios.post('http://127.0.0.1:5000/user/register', { 'username': username.value, 'password': password.value })
+        await http.post('/user/register', { 'username': username.value, 'password': password.value })
             .then((res) => {
                 let response: responseType = res.data
                 console.log(response);

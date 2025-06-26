@@ -5,7 +5,6 @@ import FeatureDetection from '@/views/FeatureDetection.vue'
 import FeatureMatching from '@/views/FeatureMatching.vue'
 import Mosaic from '@/views/Mosaic.vue'
 import Comparison from '@/views/Comparison.vue'
-import TestAxios from '@/test/testAxios.vue'
 import UserHome from '@/views/User/UserHome.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import UserLayout from '@/layouts/UserLayout.vue'
@@ -86,11 +85,6 @@ const router = createRouter({
           name: '图像拼接记录',
           path: 'mosaic',
           component: UserMosaic,
-        },
-        {
-          name: '',
-          path: 'testAxios',
-          component: TestAxios,
         },
         {
           name: '管理用户信息',

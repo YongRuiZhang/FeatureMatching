@@ -14,10 +14,11 @@
             </el-steps>
         </el-col>
     </el-row>
+
     <div class="mid">
         <div class="left">
-            <el-upload class="upload-demo" drag action="http://127.0.0.1:5000/detection/upload" method="post"
-                name="file" multiple="flase" auto-upload="false" :on-success="uploadSuccess" :on-remove="removeFile">
+            <el-upload class="upload-demo" drag :action="upload_image_api" method="post" name="file" multiple="flase"
+                auto-upload="false" :on-success="uploadSuccess" :on-remove="removeFile">
 
                 <div id="uploadBox" v-if="!havePic">
                     <div>
@@ -30,7 +31,7 @@
                 </div>
 
                 <div v-if="havePic" id="myimage">
-                    <img :src="imagepath_url" alt="图片上传失败">
+                    <img :src="base_url + imagepath_url" alt="图片上传失败">
                 </div>
 
                 <template #tip>
@@ -59,7 +60,7 @@
                 </div>
 
                 <div v-if="haveResPic" id="resImg" v-loading="resLoading" element-loading-text="检测中...">
-                    <img :src="resImagePath_url" alt="展示结果失败">
+                    <img :src="base_url + resImagePath_url" alt="展示结果失败">
                 </div>
             </div>
         </div>
@@ -167,8 +168,8 @@
                         <el-button type="warning" round @click="downloadKpts" style="width: 100%;">kpts下载</el-button>
                     </el-col>
                     <el-col :span="6">
-                        <el-button type="warning" round @click="downloadDes"
-                            style="width: 100%;">Descriptors下载</el-button>
+                        <el-button type="warning" round @click="downloadDes" style="width: 100%;"
+                            v-if="form.method !== 'Harris' && form.method !== 'Shi-Tomasi'">Descriptors下载</el-button>
                     </el-col>
                     <el-col :span="6">
                         <el-button type="warning" round @click="downloadScores" style="width: 100%;"
@@ -183,7 +184,7 @@
 <script lang='ts' setup name='FeatureDetection'>
 import { reactive, ref } from "vue"
 import { UploadFilled, Picture, Download } from '@element-plus/icons-vue'
-import axios from "axios"
+import http from '@/utils/request'
 import { ElMessage, ElNotification, type UploadFile } from "element-plus"
 import ResCard from '@/components/ResCard.vue'
 import { type responseType } from '@/types/index'
@@ -194,6 +195,9 @@ import { jwt_refresh } from "@/utils/JWT"
 const router = useRouter()
 const userStore = useUserStore()
 let { username, access_token } = userStore
+
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
+let upload_image_api = base_url + 'detection/upload'
 
 // 样式配置
 let stepsActive = ref(0) // 步骤
@@ -302,9 +306,9 @@ async function detection() {
         'config': config
     })
 
-    await axios({
+    await http({
         method: 'POST',
-        url: 'http://127.0.0.1:5000/detection/detect',
+        url: '/detection/detect',
         data: detectionForm,
         headers: {
             "Content-Type": "multipart/form-data"
@@ -377,7 +381,7 @@ const addDetectionRecord = async () => {
         'res_descriptors_path': descriptors_path.value
     }
 
-    await axios.post('http://127.0.0.1:5000/detection/record', postInfo, { headers })
+    await http.post('/detection/record', postInfo, { headers })
         .then((res) => {
             let response: responseType = res.data
 
@@ -433,7 +437,7 @@ async function downloadDes() {
     download(post_info)
 }
 const download = async (post_info: any) => {
-    await axios.post('http://127.0.0.1:5000/detection/download', post_info, {
+    await http.post('/detection/download', post_info, {
         responseType: 'blob'
     }).then((response) => {
         if (response.status != 200) {

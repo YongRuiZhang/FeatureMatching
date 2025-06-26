@@ -16,3 +16,4 @@ weights/SuperGlue
 weights/SuperPoint
 weights/DKM
 dump/
+static/

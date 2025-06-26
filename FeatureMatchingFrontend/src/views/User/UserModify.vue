@@ -58,7 +58,7 @@
 <script lang='ts' setup name='UserModify'>
 import type { responseType } from '@/types';
 import { jwt_refresh } from '@/utils/JWT';
-import axios from 'axios';
+import http from '@/utils/request';
 import { ElMessage, ElNotification } from 'element-plus';
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -107,7 +107,7 @@ const getInfo = async () => {
     const headers = {
         Authorization: 'Bearer ' + access_token,
     }
-    await axios.get('http://127.0.0.1:5000/user/' + username.value, { headers }).then((res) => {
+    await http.get('/user/' + username.value, { headers }).then((res) => {
         let response: responseType = res.data
 
         let originEmail = ''
@@ -161,7 +161,7 @@ const onSubmit = async () => {
             Authorization: 'Bearer ' + access_token,
         }
 
-        await axios.put('http://127.0.0.1:5000/user/', modifyForm, {
+        await http.put('/user/', modifyForm, {
             headers
         }).then((res) => {
             let response: responseType = res.data

@@ -25,7 +25,7 @@
                     border-width: 1px;
                     border-style: solid;">
                     <UploadImagePair ref="pair" :setStepsActive1="setStepsActive1" :setStepsActive0="setStepsActive0"
-                        :api="'http://127.0.0.1:5000/mosaic/upload_image'" style="margin-top: 10px;" />
+                        :api="upload_image_api" style="margin-top: 10px;" />
                 </el-col>
             </el-row>
 
@@ -129,8 +129,9 @@
                                 <el-col :span="18" :offset="1" style="height: 100%; width: 100%;">
                                     <el-tooltip placement="top" content="点击放大">
                                         <el-image style="height: 100%; width: 100%;" fit="contain"
-                                            :src="result_path_url" :preview-src-list="[result_path_url]"
-                                            alt="Preview Image" hide-on-click-modal preview-teleported />
+                                            :src="base_url + result_path_url"
+                                            :preview-src-list="[base_url + result_path_url]" alt="Preview Image"
+                                            hide-on-click-modal preview-teleported />
                                     </el-tooltip>
                                 </el-col>
 
@@ -161,7 +162,7 @@
 
 <script lang='ts' setup name='Mosaic'>
 import { reactive, ref, watchEffect } from "vue"
-import axios from "axios"
+import http from "@/utils/request"
 
 import { UploadFilled, Picture, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification } from "element-plus"
@@ -177,6 +178,9 @@ import { jwt_refresh } from "@/utils/JWT"
 const router = useRouter()
 const userStore = useUserStore()
 let { username, access_token } = userStore
+
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
+let upload_image_api = base_url + 'mosaic/upload_image'
 
 // 步骤条
 let stepsActive = ref(0)
@@ -282,7 +286,7 @@ const mosaic = async () => {
     resetTimer()
     startTimer()
 
-    await axios.post('http://127.0.0.1:5000/mosaic/', postForm)
+    await http.post('/mosaic/', postForm)
         .then(res => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -330,7 +334,7 @@ const downloadImage = async () => {
         'dfilepath': result_path.value,
         'type': 'image'
     }
-    await axios.post('http://127.0.0.1:5000/mosaic/download', post_info, {
+    await http.post('/mosaic/download', post_info, {
         responseType: 'blob'
     }).then((response) => {
         if (response.status != 200) {
@@ -363,7 +367,7 @@ const addMosaicRecord = async (postInfo: any) => {
         Authorization: 'Bearer ' + access_token,
     };
 
-    await axios.post('http://127.0.0.1:5000/mosaic/record', postInfo, { headers })
+    await http.post('/mosaic/record', postInfo, { headers })
         .then((res) => {
             let response: responseType = res.data
 

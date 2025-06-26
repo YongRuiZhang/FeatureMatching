@@ -32,27 +32,26 @@ matching_api = Blueprint('matching_api', __name__)
 def upload_image():
     try:
         file = request.files['file']
-        filename = secure_filename(file.filename)
 
-        if not file or not allowed_pic_file(filename):
+        if not file or not allowed_pic_file(file.filename):
             return res(code='300', msg='图片上传失败', data='不允许的图片类型')
         else:
             uid = request.form.get('uid')
             dir_path = request.form.get('dir_path')
 
-            if uid == '' or uid is None:  # 无目录，创建目录
+            if uid == '' or uid is None or dir_path == '' or dir_path is None:  # 无目录，创建目录
                 uid = str(uuid.uuid4())
 
-                static_folder = current_app.static_folder
-                dir_path = os.path.join(static_folder, "matching")
+                files_folder = current_app.config['FILES_FOLDER']
+                dir_path = os.path.join(files_folder, "matching")
                 os.makedirs(dir_path, exist_ok=True)
                 dir_path = os.path.join(dir_path, "pair")
                 os.makedirs(dir_path, exist_ok=True)
                 dir_path = os.path.join(dir_path, uid)
                 os.makedirs(dir_path, exist_ok=True)
 
-            file_path = os.path.join(dir_path, filename)
-            file_path_url = current_app.root_path + "/src/assets/matching/pair/" + uid + '/' + filename
+            file_path = os.path.join(dir_path, file.filename)
+            file_path_url = "files/matching/pair/" + uid + '/' + file.filename
 
             # 文件保存
             file.save(file_path, buffer_size=1000000000)
@@ -87,7 +86,7 @@ def matching_image():
         form = request.json.get('form')
         config = request.json.get('config')
 
-        save_path_url = current_app.root_path + "/src/assets/matching/pair/" + dir_name + '/res/'
+        save_path_url = "files/matching/pair/" + dir_name + '/res/'
 
         cls = form['class']
         if cls == '稀疏':
@@ -149,8 +148,8 @@ def upload_images():
 
         # 构造文件名及文件路径
         uid = str(uuid.uuid4())
-        static_folder = current_app.static_folder
-        dir_path = os.path.join(static_folder, "matching")
+        files_folder = current_app.config['FILES_FOLDER']
+        dir_path = os.path.join(files_folder, "matching")
         os.makedirs(dir_path, exist_ok=True)
         dir_path = os.path.join(dir_path, "images")
         os.makedirs(dir_path, exist_ok=True)
@@ -167,7 +166,7 @@ def upload_images():
             filename = secure_filename(os.path.basename(file.filename))
             if allowed_pic_file(filename):
                 file_path = os.path.join(dir_path, filename)
-                file_path_url = current_app.root_path + "/src/assets/matching/images/" + uid + '/' + filename
+                file_path_url = "files/matching/images/" + uid + '/' + filename
 
                 file.save(file_path, buffer_size=1000000000)
 
@@ -212,8 +211,8 @@ def upload_video():
         else:
             uid = str(uuid.uuid4())
 
-            static_folder = current_app.static_folder
-            dir_path = os.path.join(static_folder, "matching")
+            files_folder = current_app.config.get('FILES_FOLDER')
+            dir_path = os.path.join(files_folder, "matching")
             os.makedirs(dir_path, exist_ok=True)
             dir_path = os.path.join(dir_path, "video")
             os.makedirs(dir_path, exist_ok=True)
@@ -221,7 +220,7 @@ def upload_video():
             os.makedirs(dir_path, exist_ok=True)
 
             file_path = os.path.join(dir_path, filename)
-            file_path_url = current_app.root_path + "/src/assets/matching/video/" + uid + '/' + filename
+            file_path_url = "files/matching/video/" + uid + '/' + filename
 
             # 文件保存
             file.save(file_path, buffer_size=1000000000)
@@ -263,9 +262,9 @@ def matching_images():
             fix = False
 
         if origin_type == '多张图片':
-            save_path_url = current_app.root_path + "/src/assets/matching/images/" + dir_name + '/res/'
+            save_path_url = "files/matching/images/" + dir_name + '/res/'
         else:
-            save_path_url = current_app.root_path + "/src/assets/matching/video/" + dir_name + '/res/'
+            save_path_url = "files/matching/video/" + dir_name + '/res/'
 
         cls = form['class']
         if cls == '稀疏':
@@ -273,25 +272,30 @@ def matching_images():
             matchMethod = form['matchmethod']
             if matchMethod == 'SuperGlue':
                 scene = config['scene']
-                save_path, save_matches_path, save_poses_path = SuperGlue.matching_images(path, scene, K, fix, origin_type,
+                save_path, save_matches_path, save_poses_path = SuperGlue.matching_images(path, scene, K, fix,
+                                                                                          origin_type,
                                                                                           skip=skip, fps=fps)
             elif matchMethod == 'LoFTR':
                 scene = config['scene']
             elif matchMethod == 'BF':
-                save_path, save_matches_path, save_poses_path = BF.matching_BF_images(path, kptMethod, K, fix, origin_type,
+                save_path, save_matches_path, save_poses_path = BF.matching_BF_images(path, kptMethod, K, fix,
+                                                                                      origin_type,
                                                                                       skip=skip, fps=fps)
             elif matchMethod == 'FLANN':
                 save_path, save_matches_path, save_poses_path = FLANN.matching_FLANN_images(path, kptMethod, K, fix,
-                                                                                            origin_type, skip=skip, fps=fps)
+                                                                                            origin_type, skip=skip,
+                                                                                            fps=fps)
         elif cls == '半稀疏':
             matchMethod = form['matchmethod']
             if matchMethod == 'LoFTR':
                 scene = config['scene']
-                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_images(path, K, scene, fix, origin_type,
+                save_path, save_matches_path, save_poses_path = LoFTR.withoutKpts_images(path, K, scene, fix,
+                                                                                         origin_type,
                                                                                          skip=skip, fps=fps)
             elif matchMethod == 'ASpanFormer':
                 scene = config['scene']
-                save_path, save_matches_path, save_poses_path = ASpanFormer.matching_images(path, K, scene, fix, origin_type,
+                save_path, save_matches_path, save_poses_path = ASpanFormer.matching_images(path, K, scene, fix,
+                                                                                            origin_type,
                                                                                             skip=skip, fps=fps)
         elif cls == '稠密':
             matchMethod = form['matchmethod']
@@ -427,7 +431,7 @@ def get_records(user_id, pageSize, page):
                         if os.path.isfile(entry_path):
                             if allowed_pic_file(entry):
                                 picture_files.append(
-                                    current_app.root_path + "/src/assets/matching/images/" + dirname + "/" + entry)
+                                     "files/matching/images/" + dirname + "/" + entry)
                     r['viz_path'] = json.dumps(picture_files)
                 elif record.origin_type == '视频':
                     r['viz_path'] = json.dumps(data.video_url)

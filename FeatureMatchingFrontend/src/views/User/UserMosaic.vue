@@ -36,14 +36,16 @@
 
                 <el-table-column label="左图像" width="160" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.left_url" :preview-src-list="[scope.row.left_url]" hide-on-click-modal
-                            preview-teleported style="aspect-ratio: 16 / 10;" />
+                        <el-image :src="base_url + scope.row.left_url"
+                            :preview-src-list="[base_url + scope.row.left_url]" hide-on-click-modal preview-teleported
+                            style="aspect-ratio: 16 / 10;" />
                     </template>
                 </el-table-column>
                 <el-table-column label="右图像" width="160" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.right_url" :preview-src-list="[scope.row.right_url]"
-                            hide-on-click-modal preview-teleported style="aspect-ratio: 16 / 10;" />
+                        <el-image :src="base_url + scope.row.right_url"
+                            :preview-src-list="[base_url + scope.row.right_url]" hide-on-click-modal preview-teleported
+                            style="aspect-ratio: 16 / 10;" />
                     </template>
                 </el-table-column>
                 <el-table-column prop="algorithm_type" label="算法类型" width="160" align="center" :filters="[
@@ -62,8 +64,9 @@
                 <el-table-column prop="scene" label="场景" width="120" align="center" />
                 <el-table-column label="可视化结果" width="200" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.save_path_url" :preview-src-list="[scope.row.save_path_url]"
-                            hide-on-click-modal preview-teleported />
+                        <el-image :src="base_url + scope.row.save_path_url"
+                            :preview-src-list="[base_url + scope.row.save_path_url]" hide-on-click-modal
+                            preview-teleported />
                     </template>
                 </el-table-column>
                 <el-table-column prop="elapsed_time" label="耗时(ms)" width="160" align="center" />
@@ -100,7 +103,9 @@ import { ElMessage, ElMessageBox, ElNotification } from "element-plus"
 import { jwt_refresh } from "@/utils/JWT"
 import { useRouter } from 'vue-router'
 import { storeToRefs } from "pinia"
-import axios from "axios"
+import http from "@/utils/request"
+
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -150,7 +155,7 @@ onMounted(async () => {
 
 // 查
 const getTotal = async () => {
-    await axios.get('http://127.0.0.1:5000/mosaic/total/' + user_id.value, { headers })
+    await http.get('/mosaic/total/' + user_id.value, { headers })
         .then((res) => {
             let response: responseType = res.data
 
@@ -183,7 +188,7 @@ const getTotal = async () => {
         })
 }
 const getInfo = async () => {
-    await axios.get('http://127.0.0.1:5000/mosaic/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
+    await http.get('/mosaic/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -233,7 +238,7 @@ const getInfo = async () => {
 }
 
 const handleSizeChange = async (newPageSize: number) => {
-    await axios.get('http://127.0.0.1:5000/mosaic/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
+    await http.get('/mosaic/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -284,7 +289,7 @@ const handleSizeChange = async (newPageSize: number) => {
         })
 }
 const handleCurrentChange = async (newPage: number) => {
-    await axios.get('http://127.0.0.1:5000/mosaic/' + user_id.value + '/' + pageSize.value + '/' + newPage, { headers })
+    await http.get('/mosaic/' + user_id.value + '/' + pageSize.value + '/' + newPage, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -367,7 +372,7 @@ const deleteSome = () => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/mosaic/', { data: { 'deleteIds': deleteIds.value, 'user_id': user_id.value }, headers })
+        http.delete('/mosaic/', { data: { 'deleteIds': deleteIds.value, 'user_id': user_id.value }, headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -402,7 +407,7 @@ const deleteSomeOne = async (record: mosaicRecordType) => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/mosaic/' + record.id + '/' + user_id.value, { headers })
+        http.delete('/mosaic/' + record.id + '/' + user_id.value, { headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -437,7 +442,7 @@ const downloadViz = async (record: mosaicRecordType) => {
         'dfilepath': record.save_path,
         'type': 'image'
     }
-    await axios.post('http://127.0.0.1:5000/mosaic/download', post_info, {
+    await http.post('/mosaic/download', post_info, {
         responseType: 'blob'
     }).then((response) => {
         if (response.status != 200) {

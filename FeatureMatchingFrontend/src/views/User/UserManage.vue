@@ -170,7 +170,7 @@
 </template>
 
 <script lang='ts' setup name=''>
-import axios from "axios"
+import http from "@/utils/request"
 import { computed, onMounted, reactive, ref } from "vue"
 import { useUserStore } from "@/stores/UserStore"
 import type { responseType, userType } from "@/types"
@@ -221,7 +221,7 @@ onMounted(async () => {
 
 // 查
 const getTotal = async () => {
-    await axios.get('http://127.0.0.1:5000/user/total', { headers })
+    await http.get('/user/total', { headers })
         .then((res) => {
             let response: responseType = res.data
 
@@ -254,7 +254,7 @@ const getTotal = async () => {
         })
 }
 const getInfo = async () => {
-    await axios.get('http://127.0.0.1:5000/user/' + pageSize.value + '/' + currentPage.value, { headers })
+    await http.get('/user/' + pageSize.value + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -293,7 +293,7 @@ const getInfo = async () => {
 }
 
 const handleSizeChange = async (newPageSize: number) => {
-    await axios.get('http://127.0.0.1:5000/user/' + newPageSize + '/' + currentPage.value, { headers })
+    await http.get('/user/' + newPageSize + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -336,7 +336,7 @@ const handleSizeChange = async (newPageSize: number) => {
         })
 }
 const handleCurrentChange = async (newPage: number) => {
-    await axios.get('http://127.0.0.1:5000/user/' + pageSize.value + '/' + newPage, { headers })
+    await http.get('/user/' + pageSize.value + '/' + newPage, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -428,7 +428,7 @@ const onSubmitAdd = async () => {
             'password': addForm.password,
             'role': addForm.role === false ? 'guest' : 'admin'
         }
-        axios.post('http://127.0.0.1:5000/user/', addUserForm, { headers })
+        http.post('/user/', addUserForm, { headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -480,7 +480,7 @@ const editSomeOne = async (user: userType) => {
     Object.assign(editForm, user)
 }
 const onSubmitEdit = async () => {
-    await axios.put('http://127.0.0.1:5000/user/role', editForm, {
+    await http.put('/user/role', editForm, {
         headers
     }).then((res) => {
         let response: responseType = res.data
@@ -521,7 +521,7 @@ const onSubmitEdit = async () => {
 }
 
 const deleteSomeOne = async (user: userType) => {
-    await axios.delete('http://127.0.0.1:5000/user/', { data: { 'uid': user.id, 'username': user.username }, headers },
+    await http.delete('/user/', { data: { 'uid': user.id, 'username': user.username }, headers },
     )
         .then((res) => {
             let response: responseType = res.data
@@ -578,7 +578,7 @@ const deleteSome = () => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/user/some', { data: { 'deleteIds': deleteIds.value }, headers })
+        http.delete('/user/some', { data: { 'deleteIds': deleteIds.value }, headers })
             .then((res) => {
                 let response: responseType = res.data
 

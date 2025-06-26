@@ -34,7 +34,8 @@
 
 <script lang='ts' setup name='UserLogin'>
 import type { responseType } from '@/types'
-import axios from 'axios'
+// import axios from 'axios'
+import http from '@/utils/request'
 import { ElNotification } from 'element-plus'
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -72,6 +73,7 @@ const handleLogin = async () => {
         return
     }
 
+
     try {
         // 对输入进行转义处理
         const safeUsername = encodeURIComponent(loginForm.username)
@@ -81,7 +83,7 @@ const handleLogin = async () => {
             'password': safePassword
         }
 
-        await axios.post('http://127.0.0.1:5000/user/login', postForm, {
+        await http.post('/user/login', postForm, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

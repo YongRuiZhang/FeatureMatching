@@ -12,7 +12,7 @@ import uuid
 
 import cv2
 import numpy as np
-from flask import Blueprint, request, current_app, send_file, after_this_request
+from flask import Blueprint, request, current_app, send_file, after_this_request, send_from_directory
 from flask_jwt_extended import jwt_required
 
 from services.detection import Harris, Shi_Tomasi, SIFT, ORB, SuperPoint
@@ -22,49 +22,36 @@ from models import User, Detection, db
 
 detection_api = Blueprint('detection_api', __name__)
 
-RESKPTS = None
-FILENAME = ""
-RESFILEPATH = ""
-RESFILENAME = ""
-
-
-def init():
-    RESKPTS = None
-    FILENAME = ""
-    RESFILEPATH = ""
-    RESFILENAME = ""
-
 
 # ---------- 上传 ----------
 @detection_api.post('/upload')
 def upload():
-    init()
     try:
-        global FILENAME
         file = request.files.get('file')
 
         if not file or not allowed_pic_file(file.filename):
             return res(code='300', msg='图片上传失败', data='不允许的图片类型')
         else:
-            static_folder = current_app.static_folder
-            dir_path = os.path.join(static_folder, "detection")
+
+            files_folder = current_app.config['FILES_FOLDER']
+            dir_path = os.path.join(files_folder, "detection")
             os.makedirs(dir_path, exist_ok=True)
 
             # 构造文件名及文件路径
             uid = str(uuid.uuid4())
-            FILENAME = uid + "_" + file.filename
-            file_path = os.path.join(dir_path, FILENAME)
-            file_path_url = current_app.root_path + "/src/assets/detection/" + FILENAME
+            filename = uid + "_" + file.filename
+            file_path = os.path.join(dir_path, filename)
+            file_path_url = 'files/detection/' + filename
 
             # 文件保存
             file.save(file_path, buffer_size=1000000000)
 
             # 返回信息
             info = {
-                'originName': file.filename,
-                'filename': FILENAME,
-                'filepath': file_path,
-                'filepath_url': file_path_url,
+                'originName': file.filename,  # 原文件名
+                'filename': filename,  # 带uid的文件名
+                'filepath': file_path,  # 文件保存路径
+                'filepath_url': file_path_url,  # 文件访问url
             }
             return res(msg='上传成功', data=info)
     except Exception as e:
@@ -75,38 +62,39 @@ def upload():
 @detection_api.post('/detect')
 def detect():
     try:
-        global RESKPTS
-        global RESFILEPATH
-        global RESFILENAME
-
         # 获取表单数据
         method = request.form.get('method')
         filename = request.form.get('filename')
         filepath = request.form.get('filepath')
-
-        ALGORITHM = method
 
         if filepath == "":
             return res(code='300', msg='检测失败', data="未上传图片")
 
         # 结果路径
         response = {}
+
         descriptors_path = ''
         scores_path = ''
-        static_folder = current_app.static_folder
-        dir_path = os.path.join(static_folder, "detection")
-        RESFILENAME = "res_{}_".format(method) + filename
-        img_path = os.path.join(static_folder, 'detection/img')
-        RESFILEPATH = os.path.join(img_path, RESFILENAME)
-        resFilePath_url = current_app.root_path + "/src/assets/detection/img/" + RESFILENAME
 
-        kpts_dir_path = os.path.join(static_folder, "detection/kpts")
+        files_folder = current_app.config['FILES_FOLDER']
+        dir_path = os.path.join(files_folder, "detection")
+        os.makedirs(dir_path, exist_ok=True)
+
+        resFileName = "res_{}_".format(method) + filename
+
+        img_path = os.path.join(dir_path, 'img')
+        os.makedirs(img_path, exist_ok=True)
+        resImgPath = os.path.join(img_path, resFileName)
+        resImgPath_url = "files/detection/img/" + resFileName
+
+        kpts_dir_path = os.path.join(files_folder, "detection/kpts")
         os.makedirs(kpts_dir_path, exist_ok=True)
-        desc_dir_path = os.path.join(static_folder, "detection/desc")
+        desc_dir_path = os.path.join(files_folder, "detection/desc")
         os.makedirs(desc_dir_path, exist_ok=True)
-        scores_dir_path = os.path.join(static_folder, "detection/scores")
+        scores_dir_path = os.path.join(files_folder, "detection/scores")
         os.makedirs(scores_dir_path, exist_ok=True)
-        filename = RESFILENAME.split(".")[0]
+
+        filename = resFileName.split(".")[0]
         kpts_file_path = os.path.join(kpts_dir_path, filename + '.npy')
         desc_file_path = os.path.join(desc_dir_path, filename + '.npy')
         scores_file_path = os.path.join(scores_dir_path, filename + '.npy')
@@ -142,7 +130,6 @@ def detect():
 
             if not os.path.exists(desc_file_path):
                 np.save(desc_file_path, des)
-                print(desc_file_path)
                 descriptors_path = desc_file_path
             else:
                 descriptors_path = ''
@@ -166,13 +153,12 @@ def detect():
         endTime = datetime.datetime.now()
 
         # 保存结果
-        cv2.imwrite(RESFILEPATH, img)
-        if not os.path.exists(kpts_file_path):
-            np.save(kpts_file_path, RESKPTS)
+        cv2.imwrite(resImgPath, img)
+        np.save(kpts_file_path, RESKPTS)
 
         response = {
-            'resImagePath': RESFILEPATH,
-            'resImagePath_url': resFilePath_url,
+            'resImagePath': resImgPath,
+            'resImagePath_url': resImgPath_url,
             'width': width,
             'height': height,
             'detectionTimes': (endTime - startTime).microseconds,

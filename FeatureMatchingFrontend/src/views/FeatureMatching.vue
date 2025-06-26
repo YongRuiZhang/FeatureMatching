@@ -22,8 +22,7 @@
                     <el-tabs tab-position="top" type="border-card" @tab-click="tabClick">
                         <el-tab-pane label="两张图片">
                             <UploadImagePair ref="pair" :setStepsActive1="setStepsActive1"
-                                :setStepsActive0="setStepsActive0"
-                                :api="'http://127.0.0.1:5000/matching/upload_image'" />
+                                :setStepsActive0="setStepsActive0" :api="upload_image_api" />
                         </el-tab-pane>
                         <el-tab-pane label="多张图片">
                             <UploadImages ref="images" :setStepsActive1="setStepsActive1"
@@ -163,23 +162,20 @@
                                 <el-col :span="18" :offset="1" style="height: 100%; width: 100%;">
                                     <el-tooltip placement="top" content="点击放大">
                                         <el-image style="height: 100%; width: 100%;" fit="contain"
-                                            :src="result_path_url" :preview-src-list="[result_path_url]"
-                                            alt="Preview Image" hide-on-click-modal preview-teleported
-                                            v-if="tabName === '两张图片'" />
+                                            :src="base_url + result_path_url"
+                                            :preview-src-list="[base_url + result_path_url]" alt="Preview Image"
+                                            hide-on-click-modal preview-teleported v-if="tabName === '两张图片'" />
                                     </el-tooltip>
                                     <video autoplay loop controls :key="result_path_url"
                                         v-if="tabName === '多张图片' || tabName === '视频'"
                                         style="height: 100%; width: 100%;">
-                                        <source :src="result_path_url" type="video/mp4">
+                                        <source :src="base_url + result_path_url" type="video/mp4">
                                         结果为视频，您的浏览器不支持 video 标签。
                                     </video>
                                 </el-col>
 
                                 <el-col :span="5">
                                     <div class="result-text">
-                                        <!-- <el-text>
-                                            总耗时: {{ formatTime(elapsedTime) }}
-                                        </el-text> -->
                                         <ResCard style="height: 50px; width: 200px;" :name="'总耗时'"
                                             :res="formatTime(elapsedTime)"></ResCard>
                                     </div>
@@ -216,7 +212,7 @@
 
 <script lang='ts' setup name='FeatureMatching'>
 import { ref, reactive, watchEffect, onBeforeUnmount } from "vue"
-import axios from "axios";
+import http from '@/utils/request'
 
 import { UploadFilled, Picture, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification } from "element-plus";
@@ -237,9 +233,13 @@ import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/UserStore";
 import { jwt_refresh } from "@/utils/JWT";
 
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
+let upload_image_api = base_url + 'matching/upload_image'
+
 let pair = ref(null)
 let images = ref(null)
 let video = ref(null)
+
 
 onBeforeUnmount(() => {
     result_path_url.value = ''
@@ -387,7 +387,7 @@ const matchingPairs = async () => {
     }
     resetTimer()
     startTimer()
-    await axios.post('http://127.0.0.1:5000/matching/image', postForm)
+    await http.post('/matching/image', postForm)
         .then(res => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -470,7 +470,7 @@ const matchingIamgesAndVideo = async () => {
     resetTimer()
     startTimer()
     ElMessage.success('正在匹配，请稍等')
-    await axios.post('http://127.0.0.1:5000/matching/images', postForm)
+    await http.post('/matching/images', postForm)
         .then(res => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -553,7 +553,7 @@ async function downloadPose() {
     download(post_info)
 }
 const download = async (post_info: any) => {
-    await axios.post('http://127.0.0.1:5000/matching/download', post_info, {
+    await http.post('/matching/download', post_info, {
         responseType: 'blob'
     }).then((response) => {
         if (response.status != 200) {
@@ -586,7 +586,7 @@ const addMatchingRecord = async (postInfo: any) => {
         Authorization: 'Bearer ' + access_token,
     };
 
-    await axios.post('http://127.0.0.1:5000/matching/record', postInfo, { headers })
+    await http.post('/matching/record', postInfo, { headers })
         .then((res) => {
             let response: responseType = res.data
 

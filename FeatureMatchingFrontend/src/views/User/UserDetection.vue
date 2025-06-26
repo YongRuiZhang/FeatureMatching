@@ -37,8 +37,9 @@
 
                 <el-table-column label="源图像" width="130" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.origin_image_url" :preview-src-list="[scope.row.origin_image_url]"
-                            hide-on-click-modal preview-teleported style="aspect-ratio: 16 / 17;" />
+                        <el-image :src="base_url + scope.row.origin_image_url"
+                            :preview-src-list="[base_url + scope.row.origin_image_url]" hide-on-click-modal
+                            preview-teleported style="aspect-ratio: 16 / 17;" />
                     </template>
                 </el-table-column>
 
@@ -65,8 +66,9 @@
                 </el-table-column>
                 <el-table-column label="结果图像" width="130" align="center">
                     <template #default="scope">
-                        <el-image :src="scope.row.res_image_url" :preview-src-list="[scope.row.res_image_url]"
-                            hide-on-click-modal preview-teleported style="aspect-ratio: 16 / 17;" />
+                        <el-image :src="base_url + scope.row.res_image_url"
+                            :preview-src-list="[base_url + scope.row.res_image_url]" hide-on-click-modal
+                            preview-teleported style="aspect-ratio: 16 / 17;" />
                     </template>
                 </el-table-column>
                 <el-table-column prop="res_kpts_num" label="Kpts 个数" width="100" align="center" />
@@ -116,7 +118,10 @@ import { ElMessage, ElMessageBox, ElNotification } from "element-plus"
 import { jwt_refresh } from "@/utils/JWT"
 import { useRouter } from 'vue-router'
 import { storeToRefs } from "pinia"
-import axios from "axios"
+// import axios from "axios"
+import http from '@/utils/request'
+
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -169,7 +174,7 @@ onMounted(async () => {
 
 // 查
 const getTotal = async () => {
-    await axios.get('http://127.0.0.1:5000/detection/total/' + user_id.value, { headers })
+    await http.get('/detection/total/' + user_id.value, { headers })
         .then((res) => {
             let response: responseType = res.data
 
@@ -202,7 +207,7 @@ const getTotal = async () => {
         })
 }
 const getInfo = async () => {
-    await axios.get('http://127.0.0.1:5000/detection/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
+    await http.get('/detection/' + user_id.value + '/' + pageSize.value + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
 
@@ -260,7 +265,7 @@ const getInfo = async () => {
 }
 
 const handleSizeChange = async (newPageSize: number) => {
-    await axios.get('http://127.0.0.1:5000/detection/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
+    await http.get('/detection/' + user_id.value + '/' + newPageSize + '/' + currentPage.value, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -322,7 +327,7 @@ const handleSizeChange = async (newPageSize: number) => {
         })
 }
 const handleCurrentChange = async (newPage: number) => {
-    await axios.get('http://127.0.0.1:5000/detection/' + user_id.value + '/' + pageSize.value + '/' + newPage, { headers })
+    await http.get('/detection/' + user_id.value + '/' + pageSize.value + '/' + newPage, { headers })
         .then((res) => {
             let response: responseType = res.data
             if (response.code === 200) {
@@ -416,7 +421,7 @@ const deleteSome = () => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/detection/', { data: { 'deleteIds': deleteIds.value, 'user_id': user_id.value }, headers })
+        http.delete('/detection/', { data: { 'deleteIds': deleteIds.value, 'user_id': user_id.value }, headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -451,7 +456,7 @@ const deleteSomeOne = async (detectionRecord: detectionRecordType) => {
             type: 'warning',
         }
     ).then(() => {
-        axios.delete('http://127.0.0.1:5000/detection/' + detectionRecord.id + '/' + user_id.value, { headers })
+        http.delete('/detection/' + detectionRecord.id + '/' + user_id.value, { headers })
             .then((res) => {
                 let response: responseType = res.data
 
@@ -493,7 +498,7 @@ const downLoadResImage = async (detectionRecord: detectionRecordType) => {
     download(detectionRecord, 'image')
 }
 const download = async (detectionRecord: detectionRecordType, type: string) => {
-    await axios.get('http://127.0.0.1:5000/detection/download/' + detectionRecord.id + '/' + type, { headers, responseType: 'blob' }).then((response) => {
+    await http.get('/detection/download/' + detectionRecord.id + '/' + type, { headers, responseType: 'blob' }).then((response) => {
 
         if (response.status != 200) {
             ElNotification.error(

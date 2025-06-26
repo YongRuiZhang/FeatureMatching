@@ -10,7 +10,7 @@
             </el-descriptions-item>
             <el-descriptions-item label="用户名" :width="180" label-align="center">{{ username }}</el-descriptions-item>
             <el-descriptions-item label="性别" :width="180" label-align="center"><el-tag>{{ gender
-            }}</el-tag></el-descriptions-item>
+                    }}</el-tag></el-descriptions-item>
             <el-descriptions-item label="邮箱" :width="180" label-align="center">{{ email }}</el-descriptions-item>
             <el-descriptions-item label="生日" :width="180" label-align="center">
                 {{ birthday }}
@@ -19,24 +19,25 @@
 
         <div style="margin-top: 50px;"></div>
 
-        <el-row>
-            <el-col :offset="2" :span="9">
+        <el-row
+            v-if="barData_detection.length !== 0 || barData_matching.length !== 0 || barData_mosaic.length !== 0 || pieData.length !== 0">
+            <el-col :offset="2" :span="9" v-if="barData_detection.length !== 0">
                 <h3>特征检测算法使用次数</h3>
-                <Chart :option="barDetectionOption" height="400px" v-if="barData_detection.length !== 0" />
+                <Chart :option="barDetectionOption" height="400px" />
             </el-col>
-            <el-col :offset="2" :span="9">
+            <el-col :offset="2" :span="9" v-if="barData_matching.length !== 0">
                 <h3>特征匹配算法使用次数</h3>
-                <Chart :option="barMatchingOption" height="440px" v-if="barData_matching.length !== 0" />
+                <Chart :option="barMatchingOption" height="440px" />
             </el-col>
         </el-row>
         <el-row>
-            <el-col :offset="2" :span="9">
+            <el-col :offset="2" :span="9" v-if="barData_mosaic.length !== 0">
                 <h3>图像拼接算法使用次数</h3>
-                <Chart :option="barMosaicOption" height="400px" v-if="barData_mosaic.length !== 0" />
+                <Chart :option="barMosaicOption" height="400px" />
             </el-col>
-            <el-col :offset="2" :span="9">
+            <el-col :offset="2" :span="9" v-if="pieData.length !== 0">
                 <h3>各功能使用次数</h3>
-                <Chart :option="pieOption" height="400px" v-if="pieData.length !== 0" />
+                <Chart :option="pieOption" height="400px" />
             </el-col>
         </el-row>
 
@@ -48,12 +49,11 @@ import { onMounted, ref, reactive, watch } from "vue"
 import { useUserStore } from "@/stores/UserStore";
 import { useRouter } from "vue-router";
 import { ElNotification } from "element-plus";
-import axios from "axios";
+import http from "@/utils/request";
 import type { responseType } from "@/types";
 import { jwt_refresh } from "@/utils/JWT";
 
 import Chart from '@/components/Chart.vue';
-import { log } from "echarts/types/src/util/log.js";
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -81,7 +81,7 @@ const getUserInfo = async () => {
     const headers = {
         Authorization: 'Bearer ' + access_token,
     }
-    await axios.get('http://127.0.0.1:5000/user/' + username, { headers }).then((res) => {
+    await http.get('/user/' + username, { headers }).then((res) => {
         let response: responseType = res.data
 
         birthday.value = response.data.birthday
@@ -121,7 +121,7 @@ const getChartData = async () => {
     const headers = {
         Authorization: 'Bearer ' + access_token,
     }
-    await axios.get('http://127.0.0.1:5000/user/charts/' + user_id, { headers }).then((res) => {
+    await http.get('/user/charts/' + user_id, { headers }).then((res) => {
         let response: responseType = res.data
 
         barData_detection.value = response.data.data_detection

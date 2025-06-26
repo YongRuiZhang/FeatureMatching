@@ -1,9 +1,8 @@
 <template>
     <el-row>
         <el-col :span="10" :offset="7">
-            <el-upload class="upload-demo" drag action="http://127.0.0.1:5000/matching/upload_video" method="post"
-                name="file" multiple="flase" :limit="1" auto-upload="false" :on-success="uploadSuccess"
-                :on-remove="removeFile">
+            <el-upload class="upload-demo" drag :action="upload_video_api" method="post" name="file" multiple="flase"
+                :limit="1" auto-upload="false" :on-success="uploadSuccess" :on-remove="removeFile">
                 <div id="uploadBox">
                     <div>
                         <el-icon class="el-icon--upload">
@@ -35,6 +34,9 @@ import { ElNotification } from "element-plus"
 import { ref } from "vue"
 import { useUploadVideoStore } from "@/stores/UploadVideo"
 
+let base_url = import.meta.env.VITE_APP_HOST + 'api/'
+let upload_video_api = base_url + 'matching/upload_video'
+
 const props = defineProps(['setStepsActive1', 'setStepsActive0'])
 
 const store = useUploadVideoStore()
@@ -65,6 +67,8 @@ const uploadSuccess = (response: any) => {
         store.setFilePath(filepath.value)
         store.setFilePathUrl(filepath_url.value)
 
+        props.setStepsActive1()
+
         ElNotification.success({
             title: response.msg,
         })
@@ -77,6 +81,7 @@ const removeFile = () => {
     uid.value = ""
     dir_path.value = ""
     store.init()
+    props.setStepsActive0()
 }
 
 function init() {
